@@ -23,16 +23,45 @@
       from { transform: translateX(100%); opacity: 0; }
       to { transform: translateX(0); opacity: 1; }
     }
-    .spinner {
+    .toggle-switch {
+      position: relative;
       display: inline-block;
-      width: 20px;
-      height: 20px;
-      border: 2px solid #fff;
-      border-radius: 50%;
-      border-top-color: transparent;
-      animation: spin 0.6s linear infinite;
+      width: 50px;
+      height: 24px;
     }
-    @keyframes spin { to { transform: rotate(360deg); } }
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    .toggle-slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #ccc;
+      transition: 0.3s;
+      border-radius: 24px;
+    }
+    .toggle-slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: 0.3s;
+      border-radius: 50%;
+    }
+    input:checked + .toggle-slider {
+      background-color: #22c55e;
+    }
+    input:checked + .toggle-slider:before {
+      transform: translateX(26px);
+    }
   </style>
   <script>
     function toggleTheme() {
@@ -65,6 +94,33 @@
   <div class="flex max-w-6xl mx-auto bg-white dark:bg-gray-800 p-6 rounded-xl shadow space-x-6 text-black dark:text-white min-h-[600px]">
     <aside class="w-52 bg-gray-100 dark:bg-gray-900 rounded-lg p-4 flex flex-col space-y-3">
       <h1 class="text-xl font-bold text-orange-400 text-center mb-2">🔐 Админ-панель</h1>
+      
+      <!-- Переключатели видимости тестов -->
+      <div class="border-t border-b border-gray-600 py-3 my-2">
+        <p class="text-sm font-semibold mb-2 text-center">👁️ Видимость тестов</p>
+        <div class="flex justify-between items-center mb-2">
+          <span class="text-sm">📋 ППО</span>
+          <label class="toggle-switch">
+            <input type="checkbox" id="togglePpo" onchange="toggleTestVisibility('ppo', this.checked)">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div class="flex justify-between items-center mb-2">
+          <span class="text-sm">📜 Устав</span>
+          <label class="toggle-switch">
+            <input type="checkbox" id="toggleUstav" onchange="toggleTestVisibility('ustav', this.checked)">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div class="flex justify-between items-center">
+          <span class="text-sm">👔 Руководство</span>
+          <label class="toggle-switch">
+            <input type="checkbox" id="toggleLeadership" onchange="toggleTestVisibility('leadership', this.checked)">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+      </div>
+      
       <button onclick="switchSet('ppoQuestions')" id="btn-ppoQuestions" class="px-3 py-2 rounded text-white bg-blue-500 hover:bg-blue-600 text-sm">📋 PPO Выбор</button>
       <button onclick="switchSet('ppoWrittenQuestions')" id="btn-ppoWrittenQuestions" class="px-3 py-2 rounded text-white bg-green-500 hover:bg-green-600 text-sm">✍️ PPO Письменные</button>
       <button onclick="switchSet('ustavQuestions')" id="btn-ustavQuestions" class="px-3 py-2 rounded text-white bg-purple-500 hover:bg-purple-600 text-sm">📜 Устав</button>
@@ -111,6 +167,41 @@ let currentSet = "ppoQuestions";
 let questions = [];
 let editingIndex = -1;
 
+// Настройки видимости тестов (по умолчанию все видны)
+function loadTestVisibility() {
+  const saved = localStorage.getItem('testVisibility');
+  const defaults = { ppo: true, ustav: true, leadership: true };
+  if (saved) {
+    const data = JSON.parse(saved);
+    return { ...defaults, ...data };
+  }
+  return defaults;
+}
+
+function saveTestVisibility(settings) {
+  localStorage.setItem('testVisibility', JSON.stringify(settings));
+}
+
+function toggleTestVisibility(test, isVisible) {
+  const settings = loadTestVisibility();
+  settings[test] = isVisible;
+  saveTestVisibility(settings);
+  showToast(`${getTestName(test)} ${isVisible ? 'показан' : 'скрыт'}`);
+}
+
+function getTestName(test) {
+  const names = { ppo: 'Тест ППО', ustav: 'Тест Устава', leadership: 'Тест Руководства' };
+  return names[test];
+}
+
+// Загрузка состояния переключателей при открытии админки
+function updateToggleButtons() {
+  const settings = loadTestVisibility();
+  document.getElementById('togglePpo').checked = settings.ppo;
+  document.getElementById('toggleUstav').checked = settings.ustav;
+  document.getElementById('toggleLeadership').checked = settings.leadership;
+}
+
 const DEFAULTS = {
   ppoQuestions: [
     { q: "Как правильно начать объявление?", options: ["а) \"продам машину\"", "б) \"Продам а/м\"", "в) \"ПРОДАМ ТАЧКУ\""], answer: "б) \"Продам а/м\"" },
@@ -135,6 +226,11 @@ function initSets() {
       localStorage.setItem(key, JSON.stringify(DEFAULTS[key]));
     }
   });
+  // Инициализация видимости тестов
+  if (!localStorage.getItem('testVisibility')) {
+    localStorage.setItem('testVisibility', JSON.stringify({ ppo: true, ustav: true, leadership: true }));
+  }
+  updateToggleButtons();
 }
 
 function loadQuestions() {
@@ -269,6 +365,7 @@ function exportData() {
   Object.keys(DEFAULTS).forEach(key => {
     data[key] = JSON.parse(localStorage.getItem(key) || "[]");
   });
+  data.testVisibility = loadTestVisibility();
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
@@ -289,6 +386,10 @@ function importData(input) {
       Object.keys(data).forEach(key => {
         if (DEFAULTS[key]) localStorage.setItem(key, JSON.stringify(data[key]));
       });
+      if (data.testVisibility) {
+        localStorage.setItem('testVisibility', JSON.stringify(data.testVisibility));
+        updateToggleButtons();
+      }
       loadQuestions();
       showToast("📂 Импорт выполнен успешно");
     } catch (err) {
