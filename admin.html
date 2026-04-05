@@ -44,6 +44,8 @@
     .btn-primary:hover { background: #2563eb; transform: translateY(-1px); }
     .btn-success { background: #10b981; color: white; }
     .btn-success:hover { background: #059669; transform: translateY(-1px); }
+    .btn-warning { background: #f59e0b; color: white; }
+    .btn-warning:hover { background: #d97706; }
     .btn-outline { background: transparent; border: 1px solid #cbd5e1; }
     html.dark .btn-outline { border-color: #475569; color: white; }
     input, textarea, select { transition: all 0.2s; background: white; }
@@ -114,13 +116,21 @@
             <div class="bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl p-3 text-white"><p class="text-xs opacity-80">В тесте</p><p class="text-2xl font-bold" id="statSelected">0</p></div>
           </div>
 
+          <!-- Панель выбора вопросов для теста -->
           <div class="bg-gradient-to-r from-indigo-500 to-purple-500 rounded-xl p-4 mb-6 text-white">
             <div class="flex flex-wrap items-center justify-between gap-3">
-              <div><i class="fas fa-check-double mr-2"></i><span class="font-semibold">Отбор вопросов для теста</span><p class="text-xs opacity-80 mt-1">Выберите, какие вопросы будут попадать в тест</p></div>
+              <div>
+                <i class="fas fa-check-double mr-2"></i>
+                <span class="font-semibold">Отбор вопросов для теста</span>
+                <p class="text-xs opacity-80 mt-1">Выберите, какие вопросы будут попадать в тест</p>
+              </div>
               <div class="flex flex-wrap gap-2">
                 <button onclick="selectAll()" class="bg-white text-indigo-600 px-3 py-1 rounded-lg text-sm font-semibold hover:bg-gray-100"><i class="fas fa-check-circle mr-1"></i>Выбрать все</button>
                 <button onclick="selectNone()" class="bg-white text-indigo-600 px-3 py-1 rounded-lg text-sm font-semibold hover:bg-gray-100"><i class="fas fa-times-circle mr-1"></i>Снять все</button>
-                <div class="flex gap-1 bg-white/20 rounded-lg p-1"><input id="randomCount" type="number" value="20" min="1" class="w-16 px-2 py-1 rounded text-black text-sm" /><button onclick="selectRandom()" class="bg-white text-indigo-600 px-3 py-1 rounded-lg text-sm font-semibold hover:bg-gray-100"><i class="fas fa-random mr-1"></i>Рандом</button></div>
+                <div class="flex gap-1 bg-white/20 rounded-lg p-1">
+                  <input id="randomCount" type="number" value="20" min="1" class="w-16 px-2 py-1 rounded text-black text-sm" />
+                  <button onclick="selectRandom()" class="bg-white text-indigo-600 px-3 py-1 rounded-lg text-sm font-semibold hover:bg-gray-100"><i class="fas fa-random mr-1"></i>Рандом</button>
+                </div>
               </div>
             </div>
           </div>
@@ -174,9 +184,6 @@ let perPage = 10;
 let autoSaveTimer = null;
 let formExpanded = true;
 
-// Список мусорных слов для защиты
-const TRASH_WORDS = ['fsd', 'test', 'asd', 'qwe', 'zzz', 'xxx', '123', 'приветпривет', 'йцу', 'фыв'];
-
 function showToast(msg, isError = false) {
   const toast = document.createElement('div');
   toast.className = `toast ${isError ? 'error' : ''}`;
@@ -214,7 +221,7 @@ function toggleForm() {
 function updateStats() {
   const multipleCount = questions.filter(q => q.options).length;
   const writtenCount = questions.filter(q => !q.options).length;
-  const selectedCount = questions.filter(q => q.inTest === true).length;
+  const selectedCount = questions.filter(q => q.inTest !== false).length;
   document.getElementById('statTotal').innerText = questions.length;
   document.getElementById('statMultiple').innerText = multipleCount;
   document.getElementById('statWritten').innerText = writtenCount;
@@ -242,7 +249,7 @@ async function loadFromFirebase() {
     const snapshot = await db.ref(`questions/${currentSet}`).once('value');
     if (snapshot.exists()) {
       questions = snapshot.val();
-      // Убеждаемся, что у каждого вопроса есть поле inTest (по умолчанию true для старых вопросов)
+      // Убедимся, что у каждого вопроса есть поле inTest (по умолчанию true)
       questions = questions.map(q => ({ ...q, inTest: q.inTest !== undefined ? q.inTest : true }));
     } else {
       questions = [];
@@ -261,6 +268,7 @@ async function syncToFirebase() {
   } catch(e) { console.error(e); }
 }
 
+// ========== УПРАВЛЕНИЕ ВЫБОРОМ ВОПРОСОВ ДЛЯ ТЕСТА ==========
 function toggleQuestionInTest(index) {
   questions[index].inTest = !questions[index].inTest;
   syncToFirebase();
@@ -295,12 +303,15 @@ function selectRandom() {
     showToast(`Максимум ${questions.length} вопросов`, true);
     return;
   }
+  // Сначала снимаем все
   questions.forEach(q => q.inTest = false);
+  // Создаём массив индексов и перемешиваем
   const indices = [...Array(questions.length).keys()];
   for (let i = indices.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [indices[i], indices[j]] = [indices[j], indices[i]];
   }
+  // Выбираем первые count
   for (let i = 0; i < count; i++) {
     questions[indices[i]].inTest = true;
   }
@@ -310,6 +321,7 @@ function selectRandom() {
   showToast(`🎲 Случайно выбрано ${count} вопросов из ${questions.length}`);
 }
 
+// ========== СОРТИРОВКА ПЕРЕТАСКИВАНИЕМ ==========
 let dragStartIndex = null;
 function onDragStart(e, index) { dragStartIndex = index; e.dataTransfer.effectAllowed = 'move'; e.target.classList.add('opacity-50'); }
 function onDragOver(e, index) { e.preventDefault(); const target = e.target.closest('.question-card'); if (target && dragStartIndex !== null && dragStartIndex !== index) target.classList.add('drag-over'); }
@@ -393,7 +405,7 @@ function renderList() {
   pageQuestions.forEach((item, idx) => {
     const globalIndex = questions.findIndex(q => q.q === item.q && q.answer === item.answer);
     const actualIndex = globalIndex !== -1 ? globalIndex : start + idx;
-    const isSelected = item.inTest === true;
+    const isSelected = item.inTest !== false;
     const el = document.createElement('div');
     el.className = `question-card ${isSelected ? 'selected' : ''}`;
     el.draggable = true;
@@ -403,4 +415,182 @@ function renderList() {
     el.ondragleave = onDragLeave;
     el.ondrop = (e) => onDrop(e, actualIndex);
     el.ondragend = onDragEnd;
-    const preview = item.q.length > 100 ? item.q.substring(0, 100) + '...
+    const preview = item.q.length > 100 ? item.q.substring(0, 100) + '...' : item.q;
+    let tagsHtml = '';
+    if (item.tags && item.tags.length) tagsHtml = `<div class="flex flex-wrap mt-2">${item.tags.map(tag => `<span class="tag"><i class="fas fa-tag mr-1 text-xs"></i>${escapeHtml(tag)}</span>`).join('')}</div>`;
+    const typeIcon = item.options ? '<i class="fas fa-list-ul text-purple-500 mr-1"></i>' : '<i class="fas fa-pen text-green-500 mr-1"></i>';
+    const typeText = item.options ? 'Выбор ответа' : 'Письменный';
+    el.innerHTML = `<div class="flex justify-between items-start"><div class="flex-1"><div class="flex items-center gap-2"><i class="fas fa-grip-vertical text-gray-400 cursor-grab"></i><span class="font-bold text-gray-500 text-sm">#${start + idx + 1}</span><span class="text-xs text-gray-400">${typeIcon} ${typeText}</span><label class="flex items-center gap-1 ml-2 cursor-pointer" onclick="event.stopPropagation()"><input type="checkbox" class="checkbox-test" ${isSelected ? 'checked' : ''} onchange="toggleQuestionInTest(${actualIndex})"><span class="text-xs">в тест</span></label></div><div class="mt-1 font-medium text-gray-800 dark:text-gray-200">${escapeHtml(preview)}</div>${tagsHtml}</div><div class="flex gap-1 ml-3"><button onclick="editQuestion(${actualIndex})" class="text-blue-500 hover:text-blue-700 p-1 rounded" title="Редактировать"><i class="fas fa-edit"></i></button><button onclick="copyQuestion(${actualIndex})" class="text-green-500 hover:text-green-700 p-1 rounded" title="Копировать"><i class="fas fa-copy"></i></button><button onclick="del(${actualIndex})" class="text-red-500 hover:text-red-700 p-1 rounded" title="Удалить"><i class="fas fa-trash"></i></button></div></div>`;
+    list.appendChild(el);
+  });
+  renderPagination();
+  document.getElementById('questionCount').innerHTML = `<i class="fas fa-database mr-1"></i>${questions.length} вопросов (показано ${filteredQuestions.length})`;
+}
+
+function addQuestion() {
+  const type = document.getElementById('type').value;
+  const q = document.getElementById('q').value.trim();
+  const correct = document.getElementById('correct').value.trim();
+  const tagsText = document.getElementById('tags').value.trim();
+  const tags = tagsText ? tagsText.split(',').map(t => t.trim()).filter(t => t) : [];
+  if (!q) { showToast('Введите вопрос!', true); return; }
+  if (!correct) { showToast('Введите ответ!', true); return; }
+  let questionObj;
+  if (type === 'multiple') {
+    const a1 = document.getElementById('a1').value.trim();
+    const a2 = document.getElementById('a2').value.trim();
+    const a3 = document.getElementById('a3').value.trim();
+    if (!a1 || !a2 || !a3) { showToast('Заполните варианты!', true); return; }
+    questionObj = { q, options: [a1, a2, a3], answer: correct, tags, inTest: true };
+  } else {
+    questionObj = { q, answer: correct, tags, inTest: true };
+  }
+  if (editingIndex >= 0) {
+    questions[editingIndex] = questionObj;
+    editingIndex = -1;
+    document.getElementById('addBtn').innerHTML = '<i class="fas fa-plus mr-1"></i> Добавить';
+    showToast('✅ Вопрос обновлён');
+  } else {
+    questions.push(questionObj);
+    showToast('✅ Вопрос добавлен');
+  }
+  filteredQuestions = [...questions];
+  syncToFirebase();
+  renderList();
+  updateStats();
+  clearForm();
+}
+
+function clearForm() {
+  document.getElementById('q').value = '';
+  document.getElementById('a1').value = '';
+  document.getElementById('a2').value = '';
+  document.getElementById('a3').value = '';
+  document.getElementById('correct').value = '';
+  document.getElementById('tags').value = '';
+  document.getElementById('type').value = 'multiple';
+  toggleType();
+  editingIndex = -1;
+  document.getElementById('addBtn').innerHTML = '<i class="fas fa-plus mr-1"></i> Добавить';
+}
+
+function editQuestion(i) {
+  const q = questions[i];
+  document.getElementById('q').value = q.q;
+  document.getElementById('correct').value = q.answer;
+  document.getElementById('tags').value = q.tags ? q.tags.join(', ') : '';
+  if (q.options) {
+    document.getElementById('type').value = 'multiple';
+    toggleType();
+    document.getElementById('a1').value = q.options[0] || '';
+    document.getElementById('a2').value = q.options[1] || '';
+    document.getElementById('a3').value = q.options[2] || '';
+  } else {
+    document.getElementById('type').value = 'written';
+    toggleType();
+  }
+  editingIndex = i;
+  document.getElementById('addBtn').innerHTML = '<i class="fas fa-save mr-1"></i> Обновить';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  if (!formExpanded) toggleForm();
+}
+
+function del(i) {
+  if (confirm('Удалить вопрос?')) {
+    questions.splice(i, 1);
+    filteredQuestions = [...questions];
+    syncToFirebase();
+    renderList();
+    updateStats();
+    showToast('🗑️ Вопрос удалён');
+  }
+}
+
+function toggleType() {
+  const type = document.getElementById('type').value;
+  document.getElementById('optionFields').style.display = type === 'multiple' ? 'block' : 'none';
+}
+
+function switchSet(set) {
+  currentSet = set;
+  loadFromFirebase();
+  clearForm();
+  document.getElementById('searchInput').value = '';
+  currentPage = 1;
+  ['ppoQuestions', 'ppoWrittenQuestions', 'ustavQuestions'].forEach(id => {
+    const btn = document.getElementById(`btn-${id}`);
+    if (btn) { if (id === set) btn.classList.add('active'); else btn.classList.remove('active'); }
+  });
+}
+
+function exportAllData() {
+  const data = { [currentSet]: questions };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `questions_${currentSet}_${new Date().toISOString().slice(0,19)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('💾 Экспорт выполнен');
+}
+
+function importAllData(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (data[currentSet]) {
+        questions = data[currentSet];
+        filteredQuestions = [...questions];
+        await syncToFirebase();
+        renderList();
+        updateStats();
+        showToast('📂 Импорт выполнен');
+      }
+    } catch(err) { showToast('Ошибка импорта', true); }
+  };
+  reader.readAsText(file);
+  input.value = '';
+}
+
+async function clearAllData() {
+  if (confirm('ВНИМАНИЕ! Это удалит ВСЕ вопросы. Продолжить?')) {
+    questions = [];
+    filteredQuestions = [];
+    await syncToFirebase();
+    renderList();
+    updateStats();
+    showToast('🗑️ Все вопросы удалены');
+  }
+}
+
+function loadTestVisibility() {
+  const saved = localStorage.getItem('testVisibility');
+  const defaults = { ppo: true, ustav: true, leadership: true };
+  if (saved) return { ...defaults, ...JSON.parse(saved) };
+  return defaults;
+}
+function saveTestVisibility(settings) { localStorage.setItem('testVisibility', JSON.stringify(settings)); if (db) db.ref('settings/testVisibility').set(settings); }
+function toggleTestVisibility(test, isVisible) { const settings = loadTestVisibility(); settings[test] = isVisible; saveTestVisibility(settings); const names = { ppo: 'Тест ППО', ustav: 'Тест Устава', leadership: 'Тест Руководства' }; showToast(`${names[test]} ${isVisible ? 'показан' : 'скрыт'}`); }
+function updateToggleButtons() { const settings = loadTestVisibility(); document.getElementById('togglePpo').checked = settings.ppo; document.getElementById('toggleUstav').checked = settings.ustav; document.getElementById('toggleLeadership').checked = settings.leadership; }
+
+document.addEventListener('keydown', function(e) {
+  if (e.ctrlKey && e.key === 's') { e.preventDefault(); if (editingIndex >= 0 || document.getElementById('q').value.trim()) addQuestion(); else { syncToFirebase(); showToast('💾 Сохранено'); } }
+  if (e.ctrlKey && e.key === 'Enter') { e.preventDefault(); addQuestion(); }
+});
+
+document.getElementById("pw").addEventListener("change", function(e) {
+  if (e.target.value === PASSWORD) {
+    document.getElementById("panel").classList.remove("hidden");
+    if (!localStorage.getItem('testVisibility')) localStorage.setItem('testVisibility', JSON.stringify({ ppo: true, ustav: true, leadership: true }));
+    updateToggleButtons();
+    initFirebase();
+    showToast('🔓 Добро пожаловать');
+  } else { showToast('❌ Неверный пароль', true); }
+});
+</script>
+</body>
+</html>
