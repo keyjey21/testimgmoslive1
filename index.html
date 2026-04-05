@@ -14,6 +14,7 @@
     .admin-modal-content input { width: 100%; padding: 10px; margin: 15px 0; border-radius: 8px; border: 1px solid #ccc; }
     .logo-clickable { cursor: pointer; transition: transform 0.2s ease; }
     .logo-clickable:active { transform: scale(0.98); }
+    .loading-settings { text-align: center; padding: 20px; color: #666; }
   </style>
   <script>
     let clickCount = 0, clickTimer = null;
@@ -38,7 +39,35 @@
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeAdminModal(); });
     function sendSuggestion() { const s = prompt("Ваше предложение или ошибка:"); if (s) alert("Спасибо!"); }
     
-    // Загрузка видимости тестов и отображение только видимых
+    // Получение URL для настроек
+    function getSettingsUrl() {
+      const currentUrl = window.location.href;
+      let baseUrl = currentUrl.replace(/\/[^\/]*$/, '');
+      if (baseUrl.includes('github.io')) {
+        const parts = baseUrl.split('/');
+        const username = parts[2].split('.')[0];
+        return `https://raw.githubusercontent.com/${username}/${username}/main/site_settings.json`;
+      }
+      return './site_settings.json';
+    }
+    
+    // Загрузка настроек видимости из облака
+    async function loadVisibilityFromCloud() {
+      const settingsUrl = getSettingsUrl();
+      try {
+        const response = await fetch(settingsUrl + '?t=' + Date.now());
+        if (response.ok) {
+          const settings = await response.json();
+          if (settings.testVisibility) {
+            localStorage.setItem('testVisibility', JSON.stringify(settings.testVisibility));
+            console.log('✅ Настройки загружены из облака');
+          }
+        }
+      } catch(e) {
+        console.log('❌ Не удалось загрузить настройки из облака, используем локальные');
+      }
+    }
+    
     function loadVisibleTests() {
       const saved = localStorage.getItem('testVisibility');
       if (saved) {
@@ -47,7 +76,10 @@
       return { ppo: true, ustav: true, leadership: true };
     }
     
-    function renderVisibleTests() {
+    async function renderVisibleTests() {
+      // Сначала пробуем загрузить свежие настройки из облака
+      await loadVisibilityFromCloud();
+      
       const visibility = loadVisibleTests();
       const container = document.getElementById('testButtonsContainer');
       if (!container) return;
@@ -70,7 +102,6 @@
         }
       });
       
-      // Если все тесты скрыты — показываем сообщение
       if (container.children.length === 0) {
         const msg = document.createElement('p');
         msg.className = 'text-center text-gray-500 py-8';
@@ -79,14 +110,15 @@
       }
     }
     
-    // Обновляем при загрузке и при изменении localStorage (на случай если админка открыта в другой вкладке)
+    // При загрузке страницы подтягиваем настройки
+    document.addEventListener('DOMContentLoaded', renderVisibleTests);
+    
+    // Слушаем изменения localStorage (для синхронизации между вкладками)
     window.addEventListener('storage', (e) => {
       if (e.key === 'testVisibility') {
         renderVisibleTests();
       }
     });
-    
-    document.addEventListener('DOMContentLoaded', renderVisibleTests);
   </script>
 </head>
 <body>
@@ -96,7 +128,7 @@
     <h1 class="text-4xl font-bold text-center mb-2">Тест МОСКВА ЛАЙВ</h1>
     <p class="text-center text-lg mb-6">Выберите тест:</p>
     <div id="testButtonsContainer" class="flex flex-col gap-4 w-full max-w-sm">
-      <!-- Кнопки тестов будут вставлены сюда через JavaScript -->
+      <div class="loading-settings">🔄 Загрузка настроек...</div>
     </div>
     <button onclick="sendSuggestion()" class="mt-4 bg-orange-600 text-white py-3 rounded-xl text-center font-semibold shadow hover:bg-orange-700 transition w-full max-w-sm">💡 Предложения или ошибки</button>
   </div>
