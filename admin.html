@@ -73,6 +73,12 @@
     .sync-status.success { background: #22c55e20; color: #22c55e; }
     .sync-status.error { background: #ef444420; color: #ef4444; }
     .sync-status.syncing { background: #f59e0b20; color: #f59e0b; }
+    .settings-panel {
+      background: #1f2937;
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 16px;
+    }
   </style>
   <script>
     function toggleTheme() {
@@ -108,6 +114,16 @@
     <aside class="w-52 bg-gray-100 dark:bg-gray-900 rounded-lg p-4 flex flex-col space-y-3">
       <h1 class="text-xl font-bold text-orange-400 text-center mb-2">🔐 Админ-панель</h1>
       
+      <!-- Настройки Gist -->
+      <div class="settings-panel">
+        <p class="text-sm font-semibold mb-2 text-center text-white">☁️ Облачная синхронизация</p>
+        <input type="text" id="gistId" placeholder="Gist ID (https://gist.github.com/.../ЭТОТ_ID)" class="w-full p-1 text-xs bg-gray-700 text-white rounded mb-2" />
+        <input type="text" id="githubToken" placeholder="GitHub Token (создать в настройках)" class="w-full p-1 text-xs bg-gray-700 text-white rounded mb-2" />
+        <button onclick="saveGistSettings()" class="w-full bg-blue-600 hover:bg-blue-700 text-white text-xs py-1 rounded mb-1">💾 Сохранить настройки</button>
+        <button onclick="syncToGist()" class="w-full bg-green-600 hover:bg-green-700 text-white text-xs py-1 rounded">☁️ Синхронизировать</button>
+        <div id="syncStatus" class="sync-status text-center text-xs mt-2"></div>
+      </div>
+      
       <!-- Переключатели видимости тестов -->
       <div class="border-t border-b border-gray-600 py-3 my-2">
         <p class="text-sm font-semibold mb-2 text-center">👁️ Видимость тестов</p>
@@ -132,9 +148,6 @@
             <span class="toggle-slider"></span>
           </label>
         </div>
-        <button onclick="syncToGitHub()" class="w-full mt-3 bg-green-600 hover:bg-green-700 text-white text-xs py-1 rounded">☁️ Сохранить в облако</button>
-        <button onclick="loadFromGitHub()" class="w-full mt-1 bg-gray-600 hover:bg-gray-700 text-white text-xs py-1 rounded">⬇️ Загрузить из облака</button>
-        <div id="syncStatus" class="sync-status text-center text-xs mt-2"></div>
       </div>
       
       <button onclick="switchSet('ppoQuestions')" id="btn-ppoQuestions" class="px-3 py-2 rounded text-white bg-blue-500 hover:bg-blue-600 text-sm">📋 PPO Выбор</button>
@@ -183,23 +196,24 @@ let currentSet = "ppoQuestions";
 let questions = [];
 let editingIndex = -1;
 
-// Получаем URL для raw-файла настроек
-function getSettingsUrl() {
-  // Автоматически определяем текущий URL сайта
-  const currentUrl = window.location.href;
-  let baseUrl = currentUrl.replace(/\/[^\/]*$/, ''); // убираем admin.html
-  // Если это локальный файл, используем относительный путь
-  if (baseUrl.startsWith('file://')) {
-    return './site_settings.json';
+// ========== Gist настройки ==========
+function getGistSettings() {
+  return {
+    gistId: localStorage.getItem('gist_id') || '',
+    token: localStorage.getItem('github_token') || ''
+  };
+}
+
+function saveGistSettings() {
+  const gistId = document.getElementById('gistId').value.trim();
+  const token = document.getElementById('githubToken').value.trim();
+  if (gistId && token) {
+    localStorage.setItem('gist_id', gistId);
+    localStorage.setItem('github_token', token);
+    showToast('✅ Настройки Gist сохранены');
+  } else {
+    showToast('❌ Введите Gist ID и Token', true);
   }
-  // Для GitHub Pages формируем raw URL
-  if (baseUrl.includes('github.io')) {
-    const parts = baseUrl.split('/');
-    const username = parts[2].split('.')[0];
-    const repo = username; // для GitHub Pages имя репозитория = username
-    return `https://raw.githubusercontent.com/${username}/${repo}/main/site_settings.json`;
-  }
-  return './site_settings.json';
 }
 
 function updateSyncStatus(message, type = 'syncing') {
@@ -214,57 +228,95 @@ function updateSyncStatus(message, type = 'syncing') {
   }, 3000);
 }
 
-async function syncToGitHub() {
-  updateSyncStatus('Сохранение...', 'syncing');
+async function syncToGist() {
+  const { gistId, token } = getGistSettings();
+  if (!gistId || !token) {
+    showToast('❌ Сначала настройте Gist ID и Token', true);
+    return;
+  }
   
-  // Собираем настройки
+  updateSyncStatus('Синхронизация...', 'syncing');
+  
   const visibility = loadTestVisibility();
   const settings = {
     testVisibility: visibility,
     lastUpdated: new Date().toISOString()
   };
   
-  const jsonStr = JSON.stringify(settings, null, 2);
-  
-  // Скачиваем файл для ручного сохранения
-  const blob = new Blob([jsonStr], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'site_settings.json';
-  a.click();
-  URL.revokeObjectURL(url);
-  
-  updateSyncStatus('✅ Файл скачан! Загрузите его в репозиторий', 'success');
-  showToast('📁 Файл settings.json скачан. Загрузите его в корень репозитория на GitHub');
-}
-
-async function loadFromGitHub() {
-  updateSyncStatus('Загрузка...', 'syncing');
-  
-  const settingsUrl = getSettingsUrl();
+  const content = btoa(unescape(encodeURIComponent(JSON.stringify(settings, null, 2))));
   
   try {
-    const response = await fetch(settingsUrl + '?t=' + Date.now()); // добавляем timestamp чтобы не кешировалось
-    if (!response.ok) {
-      throw new Error('Файл настроек не найден');
-    }
-    const settings = await response.json();
+    // Сначала получаем текущий gist, чтобы узнать sha
+    let sha = null;
+    try {
+      const getResponse = await fetch(`https://api.github.com/gists/${gistId}`, {
+        headers: { 'Authorization': `token ${token}` }
+      });
+      if (getResponse.ok) {
+        const data = await getResponse.json();
+        sha = data.files['settings.json']?.sha;
+      }
+    } catch(e) { /* gist может быть новым */ }
     
-    if (settings.testVisibility) {
-      localStorage.setItem('testVisibility', JSON.stringify(settings.testVisibility));
-      updateToggleButtons();
-      updateSyncStatus('✅ Настройки загружены из облака!', 'success');
-      showToast('☁️ Настройки видимости обновлены');
+    const response = await fetch(`https://api.github.com/gists/${gistId}`, {
+      method: 'PATCH',
+      headers: {
+        'Authorization': `token ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        files: {
+          'settings.json': {
+            content: JSON.stringify(settings, null, 2)
+          }
+        }
+      })
+    });
+    
+    if (response.ok) {
+      updateSyncStatus('✅ Синхронизировано!', 'success');
+      showToast('☁️ Настройки сохранены в облако');
     } else {
-      throw new Error('Неверный формат файла');
+      const error = await response.json();
+      throw new Error(error.message);
     }
-  } catch (error) {
+  } catch(error) {
     console.error(error);
-    updateSyncStatus('❌ Файл настроек не найден. Сначала сохраните настройки с ПК', 'error');
-    showToast('❌ Файл site_settings.json не найден в репозитории. Сначала сохраните настройки с компьютера', true);
+    updateSyncStatus('❌ Ошибка синхронизации', 'error');
+    showToast('❌ Ошибка: ' + error.message, true);
   }
 }
+
+async function loadFromGist() {
+  const { gistId, token } = getGistSettings();
+  if (!gistId || !token) {
+    console.log('Нет настроек Gist');
+    return false;
+  }
+  
+  try {
+    const response = await fetch(`https://api.github.com/gists/${gistId}`, {
+      headers: { 'Authorization': `token ${token}` }
+    });
+    
+    if (!response.ok) throw new Error('Gist не найден');
+    
+    const data = await response.json();
+    const content = data.files['settings.json']?.content;
+    if (content) {
+      const settings = JSON.parse(content);
+      if (settings.testVisibility) {
+        localStorage.setItem('testVisibility', JSON.stringify(settings.testVisibility));
+        updateToggleButtons();
+        return true;
+      }
+    }
+  } catch(error) {
+    console.log('Не удалось загрузить из Gist:', error);
+  }
+  return false;
+}
+// ======================================
 
 function loadTestVisibility() {
   const saved = localStorage.getItem('testVisibility');
@@ -277,6 +329,8 @@ function loadTestVisibility() {
 
 function saveTestVisibility(settings) {
   localStorage.setItem('testVisibility', JSON.stringify(settings));
+  // Автоматически синхронизируем при каждом изменении
+  syncToGist();
 }
 
 function toggleTestVisibility(test, isVisible) {
@@ -284,6 +338,8 @@ function toggleTestVisibility(test, isVisible) {
   settings[test] = isVisible;
   saveTestVisibility(settings);
   showToast(`${getTestName(test)} ${isVisible ? 'показан' : 'скрыт'}`);
+  // Сохраняем в облако автоматически
+  syncToGist();
 }
 
 function getTestName(test) {
@@ -329,6 +385,15 @@ function initSets() {
     localStorage.setItem('testVisibility', JSON.stringify({ ppo: true, ustav: true, leadership: true }));
   }
   updateToggleButtons();
+  
+  // Загружаем сохранённые настройки Gist
+  const savedGistId = localStorage.getItem('gist_id');
+  const savedToken = localStorage.getItem('github_token');
+  if (savedGistId) document.getElementById('gistId').value = savedGistId;
+  if (savedToken) document.getElementById('githubToken').value = savedToken;
+  
+  // Пытаемся загрузить настройки из Gist при старте
+  loadFromGist();
 }
 
 function loadQuestions() {
