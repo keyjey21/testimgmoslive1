@@ -21,7 +21,6 @@
       animation: slideIn 0.3s ease;
     }
     .toast.error { background: #ef4444; }
-    .toast.sync { background: #3b82f6; }
     @keyframes slideIn {
       from { transform: translateX(100%); opacity: 0; }
       to { transform: translateX(0); opacity: 1; }
@@ -154,7 +153,7 @@ let currentSet = "ppoQuestions";
 let questions = [];
 let editingIndex = -1;
 let db = null;
-let isSyncingFromFirebase = false; // Чтобы не было циклической синхронизации
+let isSyncing = false; // Защита от циклической синхронизации
 
 const DEFAULTS = {
   ppoQuestions: [
@@ -209,39 +208,33 @@ function initFirebase() {
     db = firebase.database();
     showToast('✅ Firebase подключен');
     
-    // Загружаем данные и настраиваем автоматические слушатели
     loadAllFromFirebase();
-    setupAutoSync();
+    setupRealTimeSync();
   } catch(e) {
     console.error(e);
     showToast('❌ Ошибка Firebase', true);
   }
 }
 
-function setupAutoSync() {
+function setupRealTimeSync() {
   if (!db) return;
   
-  // Автоматическая синхронизация видимости тестов
+  // Слушатель для видимости
   db.ref('settings/testVisibility').on('value', (snapshot) => {
-    if (isSyncingFromFirebase) return;
-    isSyncingFromFirebase = true;
-    
+    if (isSyncing) return;
     const data = snapshot.val();
     if (data) {
       localStorage.setItem('testVisibility', JSON.stringify(data));
       updateToggleButtons();
       showToast('🔄 Настройки видимости обновлены');
     }
-    isSyncingFromFirebase = false;
   });
   
-  // Автоматическая синхронизация вопросов для каждого набора
+  // Слушатели для каждого набора вопросов
   const sets = ['ppoQuestions', 'ppoWrittenQuestions', 'ustavQuestions'];
   sets.forEach(setName => {
     db.ref(`questions/${setName}`).on('value', (snapshot) => {
-      if (isSyncingFromFirebase) return;
-      isSyncingFromFirebase = true;
-      
+      if (isSyncing) return;
       const data = snapshot.val();
       if (data && Array.isArray(data)) {
         // Сохраняем в localStorage
@@ -249,20 +242,19 @@ function setupAutoSync() {
         
         // Если это текущий набор, обновляем отображение
         if (currentSet === setName) {
-          questions = data;
+          questions = [...data]; // Создаём копию массива
           renderList();
           document.getElementById('questionCount').innerText = `${questions.length} вопросов`;
-          showToast(`🔄 Вопросы "${setName}" обновлены автоматически`);
+          showToast(`🔄 Вопросы обновлены из облака`);
         }
       }
-      isSyncingFromFirebase = false;
     });
   });
 }
 
 async function loadAllFromFirebase() {
   if (!db) return;
-  isSyncingFromFirebase = true;
+  isSyncing = true;
   
   try {
     // Загружаем видимость
@@ -285,7 +277,7 @@ async function loadAllFromFirebase() {
         const data = snapshot.val();
         localStorage.setItem(setName, JSON.stringify(data));
         if (currentSet === setName) {
-          questions = data;
+          questions = [...data];
           renderList();
           document.getElementById('questionCount').innerText = `${questions.length} вопросов`;
         }
@@ -293,7 +285,7 @@ async function loadAllFromFirebase() {
         await db.ref(`questions/${setName}`).set(DEFAULTS[setName]);
         localStorage.setItem(setName, JSON.stringify(DEFAULTS[setName]));
         if (currentSet === setName) {
-          questions = DEFAULTS[setName];
+          questions = [...DEFAULTS[setName]];
           renderList();
           document.getElementById('questionCount').innerText = `${questions.length} вопросов`;
         }
@@ -303,16 +295,21 @@ async function loadAllFromFirebase() {
   } catch(e) {
     console.error(e);
   } finally {
-    isSyncingFromFirebase = false;
+    isSyncing = false;
   }
 }
 
-async function pushToFirebase(setName, data) {
-  if (!db || isSyncingFromFirebase) return;
+async function syncToFirebase(setName, data) {
+  if (!db || isSyncing) return;
+  isSyncing = true;
   try {
     await db.ref(`questions/${setName}`).set(data);
+    console.log(`✅ Отправлено в Firebase: ${setName}, ${data.length} вопросов`);
   } catch(e) {
     console.error('Ошибка отправки в Firebase:', e);
+    showToast('❌ Ошибка синхронизации', true);
+  } finally {
+    isSyncing = false;
   }
 }
 
@@ -326,7 +323,7 @@ function loadTestVisibility() {
 
 function saveTestVisibility(settings) {
   localStorage.setItem('testVisibility', JSON.stringify(settings));
-  if (db && !isSyncingFromFirebase) {
+  if (db && !isSyncing) {
     db.ref('settings/testVisibility').set(settings);
   }
 }
@@ -384,8 +381,8 @@ function saveQuestions() {
   renderList();
   showToast(`✅ Сохранено ${questions.length} вопросов`);
   
-  // Автоматически отправляем в Firebase
-  pushToFirebase(currentSet, questions);
+  // Отправляем в Firebase
+  syncToFirebase(currentSet, questions);
 }
 
 function addQuestion() {
@@ -453,7 +450,7 @@ function editQuestion(i) {
 function del(i) {
   if (confirm('Удалить вопрос?')) {
     questions.splice(i, 1);
-    saveQuestions();
+    saveQuestions(); // Здесь сохраняем обновлённый массив (уже без удалённого вопроса)
     showToast('🗑️ Вопрос удалён');
   }
 }
@@ -470,7 +467,7 @@ function switchSet(set) {
   if (saved) {
     questions = JSON.parse(saved);
   } else {
-    questions = DEFAULTS[set] || [];
+    questions = DEFAULTS[set] ? [...DEFAULTS[set]] : [];
   }
   document.getElementById('questionCount').innerText = `${questions.length} вопросов`;
   renderList();
@@ -520,9 +517,8 @@ function importAllData(input) {
       renderList();
       document.getElementById('questionCount').innerText = `${questions.length} вопросов`;
       showToast('📂 Импорт выполнен');
-      // Автоматически отправляем в Firebase
       if (db && questions.length) {
-        pushToFirebase(currentSet, questions);
+        syncToFirebase(currentSet, questions);
       }
     } catch(err) {
       showToast('Ошибка импорта', true);
@@ -540,7 +536,6 @@ function resetToDefault() {
   }
 }
 
-// ВХОД В АДМИНКУ
 document.getElementById("pw").addEventListener("change", function(e) {
   if (e.target.value === PASSWORD) {
     document.getElementById("panel").classList.remove("hidden");
