@@ -2,244 +2,74 @@
 <html lang="ru" class="light">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>МОСКВА ЛАЙВ — Тест</title>
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <meta name="description" content="Тестирование сотрудников ВГТРК Москва-Лайв" />
+  <meta name="theme-color" content="#3b82f6" />
+  <link rel="preconnect" href="https://cdn.tailwindcss.com" />
+  <link rel="preconnect" href="https://www.gstatic.com" />
+  <link rel="preconnect" href="https://moscow-live-tests-default-rtdb.firebaseio.com" />
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
-  <link href="styles.css" rel="stylesheet">
   <style>
-    .admin-modal {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0,0,0,0.7);
-      z-index: 1000;
-      align-items: center;
-      justify-content: center;
-    }
+    /* Минимальные критические стили для быстрого отображения */
+    body { margin: 0; background: #d9e8ff; transition: background 0.3s, color 0.3s; }
+    html.dark body { background: #0a2540; }
+    .admin-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; align-items: center; justify-content: center; }
     .admin-modal.active { display: flex; }
-    .admin-modal-content {
-      background: var(--bg-color, #d9e8ff);
-      border-radius: 16px;
-      padding: 2rem;
-      max-width: 400px;
-      width: 90%;
-      text-align: center;
-    }
+    .admin-modal-content { background: #d9e8ff; border-radius: 16px; padding: 2rem; max-width: 400px; width: 90%; text-align: center; }
     html.dark .admin-modal-content { background: #1f2937; color: white; }
-    .admin-modal-content input {
-      width: 100%;
-      padding: 10px;
-      margin: 15px 0;
-      border-radius: 8px;
-      border: 1px solid #ccc;
-    }
-    .logo-clickable {
-      cursor: pointer;
-      transition: transform 0.2s ease;
-    }
+    .logo-clickable { cursor: pointer; transition: transform 0.2s ease; }
     .logo-clickable:active { transform: scale(0.98); }
-    .toast {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      background: #10b981;
-      color: white;
-      padding: 12px 24px;
-      border-radius: 8px;
-      z-index: 1000;
-      animation: slideIn 0.3s ease;
-    }
-    @keyframes slideIn {
-      from { transform: translateX(100%); opacity: 0; }
-      to { transform: translateX(0); opacity: 1; }
-    }
+    .loading-settings { text-align: center; padding: 20px; color: #666; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .spinner { width: 30px; height: 30px; border: 3px solid #e2e8f0; border-top-color: #3b82f6; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 10px; }
   </style>
 </head>
 <body>
-  <div class="absolute top-4 right-4 z-50">
-    <button onclick="toggleTheme()" class="text-2xl" id="theme-icon">🌙</button>
+  <div class="absolute top-4 right-4 z-50"><button onclick="toggleTheme()" class="text-2xl p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 transition" id="theme-icon">🌙</button></div>
+  <div class="min-h-screen flex flex-col items-center justify-center p-4 md:p-6">
+    <img src="logo.png" class="w-32 md:w-48 mb-6 drop-shadow-lg rounded-xl logo-clickable" onclick="onLogoClick()" alt="Логотип Москва Лайв" loading="lazy" />
+    <h1 class="text-3xl md:text-4xl font-bold text-center mb-2">Тест МОСКВА ЛАЙВ</h1>
+    <p class="text-center text-base md:text-lg mb-6 text-gray-600 dark:text-gray-400">Выберите тест:</p>
+    <div id="testButtonsContainer" class="flex flex-col gap-4 w-full max-w-sm"><div class="loading-settings"><div class="spinner"></div>Загрузка...</div></div>
+    <button onclick="sendSuggestion()" class="mt-6 bg-orange-600 hover:bg-orange-700 text-white py-3 rounded-xl text-center font-semibold shadow transition w-full max-w-sm">💡 Предложения или ошибки</button>
   </div>
-  <div class="min-h-screen flex flex-col items-center justify-center p-6">
-    <img src="logo.png" class="w-48 mb-6 drop-shadow-lg rounded-xl logo-clickable" onclick="onLogoClick()" title="Нажмите 3 раза для входа в админ-панель">
-    <h1 class="text-4xl font-bold text-center mb-2">Тест МОСКВА ЛАЙВ</h1>
-    <p class="text-center text-lg mb-6">Выберите тест:</p>
-    <div id="testButtonsContainer" class="flex flex-col gap-4 w-full max-w-sm">
-      <div class="loading-settings">🔄 Загрузка...</div>
-    </div>
-    <button onclick="sendSuggestion()" class="mt-4 bg-orange-600 text-white py-3 rounded-xl text-center font-semibold shadow hover:bg-orange-700 transition w-full max-w-sm">💡 Предложения или ошибки</button>
-  </div>
-  <div id="adminModal" class="admin-modal" onclick="if(event.target===this) closeAdminModal()">
-    <div class="admin-modal-content">
-      <h2 class="text-xl font-bold mb-4">🔐 Вход в админ-панель</h2>
-      <input type="password" id="adminPassword" placeholder="Пароль">
-      <button onclick="checkAdminPassword()">Войти</button>
-      <button onclick="closeAdminModal()" style="background:#6b7280; margin-left:10px;">Отмена</button>
-      <div id="adminError" class="text-red-500 text-sm mt-2"></div>
-    </div>
-  </div>
+  <div id="adminModal" class="admin-modal" onclick="if(event.target===this) closeAdminModal()"><div class="admin-modal-content"><h2 class="text-xl font-bold mb-4">🔐 Вход в админ-панель</h2><input type="password" id="adminPassword" placeholder="Пароль" class="w-full p-2 rounded border"><button onclick="checkAdminPassword()" class="mt-2 bg-blue-600 text-white px-4 py-2 rounded">Войти</button><button onclick="closeAdminModal()" class="mt-2 ml-2 bg-gray-500 text-white px-4 py-2 rounded">Отмена</button><div id="adminError" class="text-red-500 text-sm mt-2"></div></div></div>
 
 <script>
-// ========== FIREBASE КОНФИГ ==========
-const FIREBASE_CONFIG = {
-  apiKey: "AIzaSyCuOIt7wMUrN8vu9RQqivNj9w3CdFitrqE",
-  authDomain: "moscow-live-tests.firebaseapp.com",
-  projectId: "moscow-live-tests",
-  storageBucket: "moscow-live-tests.firebasestorage.app",
-  messagingSenderId: "956332293918",
-  appId: "1:956332293918:web:e7f66986cca2a30474130f"
-};
-// ====================================
+// Оптимизированная версия с кешированием
+const FIREBASE_CONFIG = { apiKey: "AIzaSyCuOIt7wMUrN8vu9RQqivNj9w3CdFitrqE", authDomain: "moscow-live-tests.firebaseapp.com", projectId: "moscow-live-tests", storageBucket: "moscow-live-tests.firebasestorage.app", messagingSenderId: "956332293918", appId: "1:956332293918:web:e7f66986cca2a30474130f" };
+let clickCount = 0, clickTimer = null, db = null, cachedVisibility = null;
 
-let clickCount = 0, clickTimer = null;
-let db = null;
+function showToast(msg) { const t = document.createElement('div'); t.className = 'toast'; t.textContent = msg; document.body.appendChild(t); setTimeout(() => t.remove(), 3000); }
+function toggleTheme() { const h = document.documentElement; h.classList.toggle('dark'); h.classList.toggle('light'); localStorage.setItem('theme', h.classList.contains('dark') ? 'dark' : 'light'); document.getElementById('theme-icon').textContent = h.classList.contains('dark') ? '☀️' : '🌙'; }
+(function() { const s = localStorage.getItem('theme'); const h = document.documentElement; if (s === 'dark') { h.classList.add('dark'); h.classList.remove('light'); } else { h.classList.add('light'); h.classList.remove('dark'); } document.getElementById('theme-icon').textContent = s === 'dark' ? '☀️' : '🌙'; })();
 
-function showToast(msg) {
-  const toast = document.createElement('div');
-  toast.className = 'toast';
-  toast.textContent = msg;
-  document.body.appendChild(toast);
-  setTimeout(() => toast.remove(), 3000);
+function initFirebase() { if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG); db = firebase.database(); loadVisibility(); }
+async function loadVisibility() {
+  const cached = localStorage.getItem('testVisibilityCache');
+  const cacheTime = localStorage.getItem('testVisibilityCacheTime');
+  if (cached && cacheTime && Date.now() - parseInt(cacheTime) < 300000) { renderVisibleTests(JSON.parse(cached)); }
+  try { const s = await db.ref('settings/testVisibility').once('value'); if (s.exists()) { const v = s.val(); localStorage.setItem('testVisibilityCache', JSON.stringify(v)); localStorage.setItem('testVisibilityCacheTime', Date.now().toString()); renderVisibleTests(v); } else { renderVisibleTests({ ppo: true, ustav: true, leadership: true }); } } catch(e) { renderVisibleTests({ ppo: true, ustav: true, leadership: true }); }
+  db.ref('settings/testVisibility').on('value', (s) => { if (s.exists()) { const v = s.val(); localStorage.setItem('testVisibilityCache', JSON.stringify(v)); renderVisibleTests(v); } });
 }
-
-function initFirebase() {
-  if (!firebase.apps.length) {
-    firebase.initializeApp(FIREBASE_CONFIG);
-  }
-  db = firebase.database();
-  console.log('✅ Firebase подключен');
-  
-  // Загружаем настройки видимости
-  db.ref('settings/testVisibility').once('value').then((snapshot) => {
-    if (snapshot.exists()) {
-      localStorage.setItem('testVisibility', JSON.stringify(snapshot.val()));
-    }
-    renderVisibleTests();
-  }).catch(() => {
-    renderVisibleTests();
-  });
-  
-  // Слушаем изменения видимости в реальном времени
-  db.ref('settings/testVisibility').on('value', (snapshot) => {
-    if (snapshot.exists()) {
-      localStorage.setItem('testVisibility', JSON.stringify(snapshot.val()));
-      renderVisibleTests();
-      showToast('🔄 Настройки тестов обновлены');
-    }
-  });
-  
-  // Фоновое обновление вопросов (для тестов)
-  const sets = ['ppoQuestions', 'ppoWrittenQuestions', 'ustavQuestions'];
-  sets.forEach(setName => {
-    db.ref(`questions/${setName}`).on('value', (snapshot) => {
-      const data = snapshot.val();
-      if (data && Array.isArray(data)) {
-        localStorage.setItem(setName, JSON.stringify(data));
-        console.log(`🔄 Вопросы ${setName} обновлены в фоне`);
-      }
-    });
-  });
+function renderVisibleTests(v) {
+  const vis = v || { ppo: true, ustav: true, leadership: true };
+  const c = document.getElementById('testButtonsContainer'); if (!c) return;
+  c.innerHTML = '';
+  const tests = [{ id: 'ustav', name: '📜 Тест по Уставу', color: 'blue', url: 'ustav.html' }, { id: 'ppo', name: '📋 Тест по ППО', color: 'purple', url: 'ppo.html' }, { id: 'leadership', name: '👔 Тест по Руководству', color: 'green', url: 'leadership.html' }];
+  let cnt = 0;
+  tests.forEach(t => { if (vis[t.id]) { cnt++; const btn = document.createElement('a'); btn.href = t.url; btn.className = `bg-${t.color}-600 text-white py-3 rounded-xl text-center font-semibold shadow hover:bg-${t.color}-700 transition`; btn.textContent = t.name; c.appendChild(btn); } });
+  if (cnt === 0) c.innerHTML = '<p class="text-center text-gray-500 py-8">⚠️ Все тесты скрыты. Зайдите в админ-панель.</p>';
 }
-
-function loadTestVisibility() {
-  const saved = localStorage.getItem('testVisibility');
-  if (saved) {
-    return JSON.parse(saved);
-  }
-  return { ppo: true, ustav: true, leadership: true };
-}
-
-function renderVisibleTests() {
-  const visibility = loadTestVisibility();
-  const container = document.getElementById('testButtonsContainer');
-  if (!container) return;
-  
-  container.innerHTML = '';
-  
-  const tests = [
-    { id: 'ustav', name: '📜 Тест по Уставу', color: 'blue', url: 'ustav.html' },
-    { id: 'ppo', name: '📋 Тест по ППО', color: 'purple', url: 'ppo.html' },
-    { id: 'leadership', name: '👔 Тест по Руководству', color: 'green', url: 'leadership.html' }
-  ];
-  
-  let visibleCount = 0;
-  tests.forEach(test => {
-    if (visibility[test.id]) {
-      visibleCount++;
-      const btn = document.createElement('a');
-      btn.href = test.url;
-      btn.className = `bg-${test.color}-600 text-white py-3 rounded-xl text-center font-semibold shadow hover:bg-${test.color}-700 transition`;
-      btn.textContent = test.name;
-      container.appendChild(btn);
-    }
-  });
-  
-  if (visibleCount === 0) {
-    const msg = document.createElement('p');
-    msg.className = 'text-center text-gray-500 py-8';
-    msg.textContent = '⚠️ Все тесты скрыты. Зайдите в админ-панель, чтобы включить их.';
-    container.appendChild(msg);
-  }
-}
-
-function toggleTheme() {
-  const html = document.documentElement;
-  html.classList.toggle('dark');
-  html.classList.toggle('light');
-  localStorage.setItem('theme', html.classList.contains('dark') ? 'dark' : 'light');
-  const icon = document.getElementById('theme-icon');
-  if (icon) icon.textContent = html.classList.contains('dark') ? '☀️' : '🌙';
-}
-
-(function() {
-  const saved = localStorage.getItem('theme');
-  const html = document.documentElement;
-  if (saved === 'dark') { html.classList.add('dark'); html.classList.remove('light'); }
-  else { html.classList.add('light'); html.classList.remove('dark'); }
-  const icon = document.getElementById('theme-icon');
-  if (icon) icon.textContent = saved === 'dark' ? '☀️' : '🌙';
-})();
-
-function onLogoClick() { 
-  clickCount++; 
-  if (clickTimer) clearTimeout(clickTimer); 
-  clickTimer = setTimeout(() => clickCount = 0, 800); 
-  if (clickCount === 3) { 
-    clickCount = 0; 
-    document.getElementById('adminModal').classList.add('active'); 
-  } 
-}
-
-function checkAdminPassword() { 
-  const password = document.getElementById('adminPassword').value;
-  if (password === "admin2024") {
-    // Перенаправляем на админ-панель ТОЛЬКО при правильном пароле
-    window.location.href = "admin.html";
-  } else { 
-    document.getElementById('adminError').textContent = "Неверный пароль!"; 
-  } 
-}
-
-function closeAdminModal() { 
-  document.getElementById('adminModal').classList.remove('active'); 
-  document.getElementById('adminPassword').value = ''; 
-  document.getElementById('adminError').textContent = ''; 
-}
-
-function sendSuggestion() { 
-  const s = prompt("Ваше предложение или ошибка:"); 
-  if (s) alert("Спасибо!"); 
-}
-
-document.addEventListener('keydown', (e) => { 
-  if (e.key === 'Escape') closeAdminModal(); 
-});
-
-document.addEventListener('DOMContentLoaded', initFirebase);
+function onLogoClick() { clickCount++; if (clickTimer) clearTimeout(clickTimer); clickTimer = setTimeout(() => clickCount = 0, 800); if (clickCount === 3) { clickCount = 0; document.getElementById('adminModal').classList.add('active'); } }
+function checkAdminPassword() { if (document.getElementById('adminPassword').value === "admin2024") { window.location.href = "admin.html"; } else { document.getElementById('adminError').textContent = "Неверный пароль!"; } }
+function closeAdminModal() { document.getElementById('adminModal').classList.remove('active'); document.getElementById('adminPassword').value = ''; document.getElementById('adminError').textContent = ''; }
+function sendSuggestion() { const s = prompt("Ваше предложение или ошибка:"); if (s) alert("Спасибо!"); }
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeAdminModal(); });
+document.addEventListener('DOMContentLoaded', () => { initFirebase(); });
 </script>
 </body>
 </html>
