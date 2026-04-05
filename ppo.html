@@ -96,11 +96,15 @@ async function loadQuestionsFromFirebase() {
     const mcSnapshot = await db.ref('questions/ppoQuestions').once('value');
     const writtenSnapshot = await db.ref('questions/ppoWrittenQuestions').once('value');
     
-    const mcQuestions = mcSnapshot.exists() ? mcSnapshot.val() : [];
-    const writtenQuestions = writtenSnapshot.exists() ? writtenSnapshot.val() : [];
+    let mcQuestions = mcSnapshot.exists() ? mcSnapshot.val() : [];
+    let writtenQuestions = writtenSnapshot.exists() ? writtenSnapshot.val() : [];
+    
+    // Фильтруем: оставляем только вопросы, у которых inTest !== false (то есть true или undefined)
+    mcQuestions = mcQuestions.filter(q => q.inTest !== false);
+    writtenQuestions = writtenQuestions.filter(q => q.inTest !== false);
     
     allQuestions = [...mcQuestions, ...writtenQuestions];
-    console.log(`📋 Загружено ${allQuestions.length} вопросов из Firebase`);
+    console.log(`📋 Загружено ${allQuestions.length} вопросов из Firebase (только выбранные для теста)`);
     return allQuestions.length > 0;
   } catch(e) {
     console.error('Ошибка загрузки из Firebase:', e);
@@ -159,11 +163,12 @@ async function start() {
   const hasQuestions = await loadQuestionsFromFirebase();
   
   if (!hasQuestions || allQuestions.length === 0) {
-    showToast("❌ Нет вопросов! Добавьте их в админ-панели", true);
+    showToast("❌ Нет вопросов для теста! Добавьте их в админ-панели и отметьте 'в тест'", true);
     return;
   }
   
-  selected = shuffle([...allQuestions]).slice(0, Math.min(30, allQuestions.length));
+  // Берём все вопросы (они уже отфильтрованы), можно ограничить количество при необходимости
+  selected = shuffle([...allQuestions]);
   answers = {}; submitted = false;
   renderTest();
   startTimer();
