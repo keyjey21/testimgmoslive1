@@ -1,43 +1,59 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="ru" class="light">
 <head>
   <meta charset="UTF-8" />
-  <title>Тест Устава</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link href="styles.css" rel="stylesheet" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Тест по Уставу</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+  <link href="styles.css" rel="stylesheet" />
   <style>
-    .toast { position: fixed; bottom: 20px; right: 20px; background: #10b981; color: white; padding: 12px 24px; border-radius: 8px; z-index: 1000; animation: slideIn 0.3s ease; }
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: #10b981;
+      color: white;
+      padding: 12px 24px;
+      border-radius: 8px;
+      z-index: 1000;
+      animation: slideIn 0.3s ease;
+    }
     .toast.error { background: #ef4444; }
-    @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-    .progress-bar-container { width: 100%; background-color: #e2e8f0; border-radius: 0.375rem; height: 0.75rem; margin: 1rem 0; overflow: hidden; }
-    .progress-bar { height: 100%; background-color: #4299e1; width: 0%; transition: width 0.3s ease; }
+    @keyframes slideIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+    .progress-bar-container {
+      width: 100%;
+      background-color: #e2e8f0;
+      border-radius: 0.375rem;
+      height: 0.75rem;
+      margin: 1rem 0;
+      overflow: hidden;
+    }
+    .progress-bar {
+      height: 100%;
+      background-color: #4299e1;
+      width: 0%;
+      transition: width 0.3s ease;
+    }
   </style>
 </head>
-<body class="transition-all p-6">
-  <a href="index.html" class="fixed top-4 left-4 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold py-1 px-3 rounded shadow transition flex items-center space-x-1" title="Вернуться на главную">
-    <span>←</span><span>Главная</span>
-  </a>
-  <div class="fixed top-4 right-4 z-50">
-    <button onclick="toggleTheme()" class="text-2xl" title="Сменить тему" id="theme-icon">🌙</button>
-  </div>
-  <div class="test-wrapper" style="max-width: 600px; margin: 50px auto 0 auto; height: auto; display: flex; flex-direction: column; justify-content: flex-start;">
-    <h1 class="text-3xl font-bold text-blue-400 text-center mb-6">📜 Тест Устава "Москва-LIVE"</h1>
-    <input id="username" type="text" placeholder="Имя и фамилия" class="block mx-auto p-2 border rounded w-64 text-center dark:bg-gray-700 dark:text-white" />
-    <div class="text-center">
-      <button onclick="start()" class="mt-4 bg-blue-600 hover:bg-blue-700 text-white py-2 px-6 rounded shadow">▶ Начать тест</button>
-      <p id="timer" class="mt-2 font-semibold"></p>
-      <div class="progress-bar-container" aria-label="Прогресс теста">
-        <div id="progressBar" class="progress-bar"></div>
-      </div>
-    </div>
+<body class="transition-all">
+  <a href="index.html" class="fixed top-4 left-4 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold py-1 px-3 rounded shadow z-50">← Главная</a>
+  <div class="fixed top-4 right-4 z-50"><button onclick="toggleTheme()" class="text-2xl" id="theme-icon">🌙</button></div>
+  <div class="test-wrapper" style="max-width: 600px; margin: 50px auto 0 auto; padding: 1.5rem;">
+    <h1 class="text-3xl font-bold text-blue-400 text-center mb-4">📜 Тест по Уставу</h1>
+    <input id="username" type="text" placeholder="Имя и фамилия" class="block mx-auto p-2 border rounded w-64 text-center dark:bg-gray-700" />
+    <div class="text-center mt-4"><button onclick="start()" class="bg-blue-600 hover:bg-blue-700 text-white py-2 px-6 rounded shadow">▶ Начать тест</button></div>
     <div id="testContainer" class="mt-6 space-y-4"></div>
   </div>
 
 <script>
-// Firebase Config
-const firebaseConfig = {
+// ========== FIREBASE КОНФИГ ==========
+const FIREBASE_CONFIG = {
   apiKey: "AIzaSyCuOIt7wMUrN8vu9RQqivNj9w3CdFitrqE",
   authDomain: "moscow-live-tests.firebaseapp.com",
   projectId: "moscow-live-tests",
@@ -45,177 +61,155 @@ const firebaseConfig = {
   messagingSenderId: "956332293918",
   appId: "1:956332293918:web:e7f66986cca2a30474130f"
 };
+// ====================================
 
 const TELEGRAM_TOKEN = "7611996960:AAH7uARRG4FS8aM0M5xcK25PMagBOvnSjbQ";
 const TELEGRAM_CHAT_ID = "5755169925";
-const OTHER_CHATS = ["1360982536", "5329733389", "1880536475", "1302624133", "5337802253", "902249172", "8038255042", "480695750", "827404022", "900554752", "1798115904", "969788708"];
+const OTHER_CHATS = ["1360982536", "5329733389", "1880536475", "1302624133", "5337802253", "902249172", "8038255042"];
 
 let timerInterval, timeLeft = 900, selected = [], answers = {}, submitted = false;
 let allQuestions = [];
+let db = null;
+
+function showToast(msg, isError = false) {
+  const toast = document.createElement('div');
+  toast.className = `toast ${isError ? 'error' : ''}`;
+  toast.textContent = msg;
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 3000);
+}
 
 function initFirebase() {
-  if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-}
-
-async function loadQuestions() {
-  const snapshot = await firebase.database().ref('questions/ustavQuestions').once('value');
-  let q = snapshot.exists() ? snapshot.val() : [];
-  allQuestions = q.filter(qq => qq.inTest !== false);
-  return allQuestions.length;
-}
-
-function shuffle(arr) {
-  for (let i = arr.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [arr[i], arr[j]] = [arr[j], arr[i]];
+  if (!firebase.apps.length) {
+    firebase.initializeApp(FIREBASE_CONFIG);
   }
-  return arr;
+  db = firebase.database();
+  console.log('✅ Firebase подключен');
+}
+
+async function loadQuestionsFromFirebase() {
+  if (!db) initFirebase();
+  try {
+    const snapshot = await db.ref('questions/ustavQuestions').once('value');
+    let questions = snapshot.exists() ? snapshot.val() : [];
+    // Фильтруем: оставляем только вопросы, у которых inTest !== false
+    questions = questions.filter(q => q.inTest !== false);
+    allQuestions = questions;
+    console.log(`📋 Загружено ${allQuestions.length} вопросов из Firebase (только выбранные для теста)`);
+    return allQuestions.length > 0;
+  } catch(e) {
+    console.error('Ошибка загрузки из Firebase:', e);
+    return false;
+  }
+}
+
+function shuffle(arr) { 
+  for (let i = arr.length - 1; i > 0; i--) { 
+    const j = Math.floor(Math.random() * (i + 1)); 
+    [arr[i], arr[j]] = [arr[j], arr[i]]; 
+  } 
+  return arr; 
 }
 
 function startTimer() {
   clearInterval(timerInterval);
   timeLeft = 900;
   updateTimerDisplay();
-  timerInterval = setInterval(() => {
-    timeLeft--;
-    updateTimerDisplay();
-    if (timeLeft <= 0) {
-      clearInterval(timerInterval);
-      alert("Время вышло!");
-      disableTest();
-    }
+  timerInterval = setInterval(() => { 
+    timeLeft--; 
+    updateTimerDisplay(); 
+    if (timeLeft <= 0) { 
+      clearInterval(timerInterval); 
+      alert("Время вышло!"); 
+      disableTest(); 
+    } 
   }, 1000);
 }
 
 function updateTimerDisplay() {
-  const minutes = Math.floor(timeLeft / 60);
-  const seconds = timeLeft % 60;
+  const m = Math.floor(timeLeft / 60), s = timeLeft % 60;
   const timerEl = document.getElementById("timer");
-  if (timerEl) timerEl.innerHTML = `⏰ Осталось времени: ${minutes}:${seconds.toString().padStart(2, '0')}`;
-  const progressBar = document.getElementById("progressBar");
-  if (progressBar) progressBar.style.width = ((900 - timeLeft) / 900) * 100 + "%";
+  if (timerEl) timerEl.innerHTML = `⏰ ${m}:${s.toString().padStart(2, '0')}`;
+  const bar = document.getElementById("progressBar");
+  if (bar) bar.style.width = ((900 - timeLeft) / 900) * 100 + "%";
 }
 
-function disableTest() {
-  const inputs = document.querySelectorAll("#testContainer input[type='radio']");
-  inputs.forEach(input => input.disabled = true);
-  const btn = document.querySelector("button[onclick='checkAnswers()']");
-  if (btn) btn.disabled = true;
+function disableTest() { 
+  document.querySelectorAll("#testContainer input, #checkBtn").forEach(el => el.disabled = true); 
 }
 
 async function sendToTelegram(message) {
   const url = `https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`;
   try {
-    await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, text: message, parse_mode: "HTML" })
-    });
-    for (const id of OTHER_CHATS) {
-      await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ chat_id: id, text: message, parse_mode: "HTML" })
-      });
-    }
-  } catch(e) {}
+    await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, text: message, parse_mode: "HTML" }) });
+    for (const id of OTHER_CHATS) fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ chat_id: id, text: message, parse_mode: "HTML" }) });
+  } catch(e) { console.error(e); }
 }
 
 async function start() {
   const fio = document.getElementById("username").value.trim();
-  if (!fio) {
-    alert("Введите имя и фамилию!");
-    return;
-  }
+  if (!fio) return showToast("Введите имя и фамилию!", true);
   
-  const count = await loadQuestions();
-  if (count === 0) {
-    alert("Нет вопросов для теста! Добавьте вопросы в админ-панели.");
+  showToast("🔄 Загрузка вопросов...");
+  const hasQuestions = await loadQuestionsFromFirebase();
+  
+  if (!hasQuestions || allQuestions.length === 0) {
+    showToast("❌ Нет вопросов для теста! Добавьте их в админ-панели и отметьте 'в тест'", true);
     return;
   }
   
   selected = shuffle([...allQuestions]);
-  answers = {};
-  submitted = false;
+  answers = {}; submitted = false;
   renderTest();
   startTimer();
 }
 
 function renderTest() {
   const container = document.getElementById("testContainer");
-  container.innerHTML = "";
-  
+  container.innerHTML = `<div id="timer" class="timer text-center font-bold text-lg"></div><div class="progress-bar-container"><div id="progressBar" class="progress-bar"></div></div>`;
   selected.forEach((q, i) => {
     const div = document.createElement("div");
-    div.className = "p-4 border rounded bg-white shadow dark:bg-gray-800";
-    div.innerHTML = `<p class='font-semibold mb-2'>${i+1}. ${escapeHtml(q.q)}</p>`;
-    q.options.forEach(opt => {
-      div.innerHTML += `<label class='block'>
-        <input type='radio' name='q${i}' value='${escapeHtml(opt)}' onchange='saveAnswer(${i}, this.value)' class='mr-2' />
-        ${escapeHtml(opt)}
-      </label>`;
+    div.className = "p-4 border rounded bg-white dark:bg-gray-800 shadow";
+    div.innerHTML = `<p class='font-semibold mb-2'>${i+1}. ${q.q}</p>`;
+    q.options.forEach(opt => { 
+      div.innerHTML += `<label class='block'><input type='radio' name='q${i}' value='${opt}' onchange='saveAnswer(${i}, this.value)' class='mr-2' />${opt}</label>`; 
     });
     container.appendChild(div);
   });
-  
   const btn = document.createElement("button");
+  btn.id = "checkBtn";
   btn.textContent = "✅ Проверить ответы";
   btn.className = "bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded font-bold mt-4 w-full";
-  btn.onclick = () => checkAnswers();
+  btn.onclick = checkAnswers;
   container.appendChild(btn);
 }
 
-function saveAnswer(i, val) {
-  if (!submitted) answers[i] = val;
-}
+function saveAnswer(i, val) { if (!submitted) answers[i] = val; }
 
 function checkAnswers() {
   if (submitted) return;
   submitted = true;
-  
   const fio = document.getElementById("username").value.trim();
   let score = 0;
-  
   selected.forEach((q, i) => {
-    const div = document.getElementById("testContainer").children[i];
+    const div = document.getElementById("testContainer").children[i+1];
     const radios = document.getElementsByName("q" + i);
-    let isCorrect = false;
-    radios.forEach(r => {
-      r.disabled = true;
-      if (r.checked && r.value === q.answer) {
-        isCorrect = true;
-        r.parentElement.classList.add("text-green-600");
-      } else if (r.checked) {
-        r.parentElement.classList.add("text-red-600");
-      }
+    let correct = false;
+    radios.forEach(r => { 
+      r.disabled = true; 
+      if (r.checked && r.value === q.answer) { 
+        correct = true; 
+        r.parentElement.classList.add("text-green-600"); 
+      } else if (r.checked) r.parentElement.classList.add("text-red-600"); 
     });
-    if (isCorrect) score++;
-    
-    const correctAnswer = document.createElement("p");
-    correctAnswer.className = "text-sm text-gray-600 dark:text-gray-400 mt-2 pt-1 border-t";
-    correctAnswer.innerHTML = `<span class="font-semibold">Правильный ответ:</span> ${escapeHtml(q.answer)}`;
-    div.appendChild(correctAnswer);
+    if (correct) score++;
+    div.innerHTML += `<p class='text-sm text-gray-500 mt-1'>✅ Правильно: ${q.answer}</p>`;
   });
-  
   const container = document.getElementById("testContainer");
   const passScore = Math.floor(selected.length * 0.7);
-  const resultDiv = document.createElement("div");
-  resultDiv.className = `mt-4 p-4 rounded text-center font-bold text-xl ${score >= passScore ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`;
-  resultDiv.innerHTML = `📊 Результат: ${score} / ${selected.length}<br>${score >= passScore ? '✅ СДАЛ!' : '❌ НЕ СДАЛ'}`;
-  container.appendChild(resultDiv);
-  
+  container.innerHTML += `<div class="mt-4 p-4 rounded text-center font-bold text-xl ${score >= passScore ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}">📊 Результат: ${score} / ${selected.length}<br>${score >= passScore ? '✅ СДАЛ!' : '❌ НЕ СДАЛ'}</div>`;
   clearInterval(timerInterval);
   sendToTelegram(`📝 <b>Тест Устава</b>\n👤 ${fio}\n📊 ${score}/${selected.length}\n${score >= passScore ? "✅ СДАЛ" : "❌ НЕ СДАЛ"}`);
-}
-
-function escapeHtml(text) {
-  if (!text) return '';
-  return text.replace(/[&<>]/g, function(m) {
-    if (m === '&') return '&amp;';
-    if (m === '<') return '&lt;';
-    if (m === '>') return '&gt;';
-    return m;
-  });
 }
 
 function toggleTheme() {
@@ -230,17 +224,10 @@ function toggleTheme() {
 (function() {
   const saved = localStorage.getItem('theme');
   const html = document.documentElement;
-  if (saved === 'dark') {
-    html.classList.add('dark');
-    html.classList.remove('light');
-    const icon = document.getElementById('theme-icon');
-    if (icon) icon.textContent = '☀️';
-  } else {
-    html.classList.add('light');
-    html.classList.remove('dark');
-    const icon = document.getElementById('theme-icon');
-    if (icon) icon.textContent = '🌙';
-  }
+  if (saved === 'dark') { html.classList.add('dark'); html.classList.remove('light'); }
+  else { html.classList.add('light'); html.classList.remove('dark'); }
+  const icon = document.getElementById('theme-icon');
+  if (icon) icon.textContent = saved === 'dark' ? '☀️' : '🌙';
 })();
 
 initFirebase();
