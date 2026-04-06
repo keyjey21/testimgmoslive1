@@ -39,8 +39,6 @@
       width: 0%;
       transition: width 0.3s ease;
     }
-    .answer-correct { color: #22c55e; font-weight: 500; margin-top: 8px; padding-top: 4px; border-top: 1px solid #e2e8f0; }
-    .answer-wrong { color: #ef4444; font-weight: 500; margin-top: 8px; padding-top: 4px; border-top: 1px solid #e2e8f0; }
   </style>
 </head>
 <body class="transition-all">
@@ -97,14 +95,15 @@ async function loadQuestionsFromFirebase() {
     let mcQuestions = mcSnapshot.exists() ? mcSnapshot.val() : [];
     let writtenQuestions = writtenSnapshot.exists() ? writtenSnapshot.val() : [];
     
+    // Фильтруем только вопросы, отмеченные для теста
     mcQuestions = mcQuestions.filter(q => q.inTest !== false);
     writtenQuestions = writtenQuestions.filter(q => q.inTest !== false);
     
     allQuestions = [...mcQuestions, ...writtenQuestions];
-    console.log(`📋 Загружено ${allQuestions.length} вопросов`);
+    console.log(`📋 Загружено ${allQuestions.length} вопросов из Firebase`);
     return allQuestions.length > 0;
   } catch(e) {
-    console.error(e);
+    console.error('Ошибка загрузки из Firebase:', e);
     return false;
   }
 }
@@ -160,7 +159,7 @@ async function start() {
   const hasQuestions = await loadQuestionsFromFirebase();
   
   if (!hasQuestions || allQuestions.length === 0) {
-    showToast("❌ Нет вопросов для теста!", true);
+    showToast("❌ Нет вопросов для теста! Добавьте их в админ-панели и отметьте 'в тест'", true);
     return;
   }
   
@@ -177,17 +176,16 @@ function renderTest() {
   selected.forEach((q, i) => {
     const div = document.createElement("div");
     div.className = "p-4 border rounded bg-white dark:bg-gray-800 shadow";
-    div.id = `question-${i}`;
+    div.id = `q-${i}`;
     div.innerHTML = `<p class='font-semibold mb-2'>${i+1}. ${escapeHtml(q.q)}</p>`;
     
     if (q.options) {
       q.options.forEach(opt => { 
-        div.innerHTML += `<label class='block'><input type='radio' name='q${i}' value='${escapeHtml(opt)}' class='mr-2' />${escapeHtml(opt)}</label>`; 
+        div.innerHTML += `<label class='block'><input type='radio' name='q${i}' value='${escapeHtml(opt)}' onchange='saveAnswer(${i}, this.value)' class='mr-2' />${escapeHtml(opt)}</label>`; 
       });
     } else {
-      div.innerHTML += `<textarea name='q${i}' rows='2' class='w-full p-2 border rounded dark:bg-gray-700' placeholder="Введите ответ..."></textarea>`;
+      div.innerHTML += `<textarea name='q${i}' rows='2' class='w-full p-2 border rounded dark:bg-gray-700' oninput='saveAnswer(${i}, this.value)' placeholder="Введите ответ..."></textarea>`;
     }
-    
     container.appendChild(div);
   });
   
@@ -210,49 +208,39 @@ function checkAnswers() {
   const fio = document.getElementById("username").value.trim();
   let score = 0;
   
-  // Сначала собираем все ответы
-  for (let i = 0; i < selected.length; i++) {
-    const q = selected[i];
-    const radios = document.getElementsByName(`q${i}`);
-    const textarea = document.querySelector(`textarea[name='q${i}']`);
-    
-    if (radios.length > 0) {
-      for (let r = 0; r < radios.length; r++) {
-        if (radios[r].checked) {
-          answers[i] = radios[r].value;
-          break;
-        }
-      }
-    } else if (textarea) {
-      answers[i] = textarea.value;
-    }
-  }
-  
-  // Подсчитываем баллы и показываем правильные ответы
   for (let i = 0; i < selected.length; i++) {
     const q = selected[i];
     const userAnswer = answers[i] || "";
-    const isCorrect = normalizeAnswer(userAnswer) === normalizeAnswer(q.answer);
+    let isCorrect = false;
+    
+    if (q.options) {
+      // Для вопросов с вариантами ответа
+      isCorrect = (userAnswer === q.answer);
+    } else {
+      // Для письменных вопросов
+      isCorrect = normalizeAnswer(userAnswer) === normalizeAnswer(q.answer);
+    }
     
     if (isCorrect) score++;
     
-    // Показываем правильный ответ под вопросом
-    const questionDiv = document.getElementById(`question-${i}`);
+    // Показываем правильный ответ
+    const questionDiv = document.getElementById(`q-${i}`);
     if (questionDiv) {
-      const resultDiv = document.createElement("div");
-      resultDiv.className = isCorrect ? "answer-correct" : "answer-wrong";
-      resultDiv.innerHTML = `<i class="fas ${isCorrect ? 'fa-check-circle' : 'fa-times-circle'} mr-1"></i> Правильный ответ: ${escapeHtml(q.answer)}`;
-      questionDiv.appendChild(resultDiv);
+      const answerDiv = document.createElement("div");
+      answerDiv.className = `text-sm mt-2 pt-2 border-t ${isCorrect ? 'text-green-600' : 'text-red-600'}`;
+      answerDiv.innerHTML = `<i class="fas ${isCorrect ? 'fa-check-circle' : 'fa-times-circle'} mr-1"></i> Правильный ответ: ${escapeHtml(q.answer)}`;
+      questionDiv.appendChild(answerDiv);
     }
-    
-    // Блокируем все инпуты в этом вопросе
+  }
+  
+  // Блокируем все инпуты
+  for (let i = 0; i < selected.length; i++) {
     const radios = document.getElementsByName(`q${i}`);
     radios.forEach(r => r.disabled = true);
     const textarea = document.querySelector(`textarea[name='q${i}']`);
     if (textarea) textarea.disabled = true;
   }
   
-  // Показываем результат
   const container = document.getElementById("testContainer");
   const passScore = Math.floor(selected.length * 0.7);
   
