@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>МОСКВА ЛАЙВ | тесты</title>
+  <title>МОСКВА ЛАЙВ | Тесты</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
@@ -15,74 +15,102 @@
       min-height: 100vh;
       color: #fff;
     }
+    /* Анимированный градиентный фон */
+    .animated-bg {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+      background: radial-gradient(circle at 20% 30%, #0a0a2a, #050510);
+    }
     /* Неоновое свечение */
     .neon-glow {
-      text-shadow: 0 0 5px #00d4ff, 0 0 10px #00d4ff, 0 0 20px #00d4ff, 0 0 40px #00d4ff;
+      text-shadow: 0 0 5px #00d4ff, 0 0 10px #00d4ff, 0 0 20px #00d4ff;
     }
-    .btn-neon {
-      background: rgba(0, 0, 0, 0.6);
-      border: 2px solid #00d4ff;
-      color: #00d4ff;
+    .neon-glow-pink {
+      text-shadow: 0 0 5px #ff00d4, 0 0 10px #ff00d4, 0 0 20px #ff00d4;
+    }
+    /* Карточка теста */
+    .test-card {
+      background: rgba(15, 15, 35, 0.6);
+      backdrop-filter: blur(12px);
+      border-radius: 28px;
+      padding: 28px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      border: 1px solid rgba(0, 212, 255, 0.3);
+      position: relative;
+      overflow: hidden;
+    }
+    .test-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(0, 212, 255, 0.2), transparent);
+      transition: left 0.5s ease;
+    }
+    .test-card:hover::before {
+      left: 100%;
+    }
+    .test-card:hover {
+      transform: translateY(-8px);
+      border-color: #00d4ff;
+      box-shadow: 0 0 30px rgba(0, 212, 255, 0.3);
+    }
+    .test-card.pink:hover {
+      border-color: #ff00d4;
+      box-shadow: 0 0 30px rgba(255, 0, 212, 0.3);
+    }
+    .test-card.green:hover {
+      border-color: #00ff88;
+      box-shadow: 0 0 30px rgba(0, 255, 136, 0.3);
+    }
+    .test-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+    }
+    .test-title {
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    .test-desc {
+      font-size: 13px;
+      color: #aaa;
+    }
+    /* Кнопка предложений */
+    .suggestion-btn {
+      background: linear-gradient(135deg, #ff00d4, #00d4ff);
+      border: none;
+      color: white;
       padding: 14px 28px;
       border-radius: 60px;
       font-weight: bold;
-      font-size: 18px;
+      font-size: 16px;
       cursor: pointer;
       transition: all 0.3s ease;
-      text-decoration: none;
-      display: inline-block;
-      text-align: center;
-      backdrop-filter: blur(10px);
-      box-shadow: 0 0 10px rgba(0, 212, 255, 0.3);
+      box-shadow: 0 0 15px rgba(0, 212, 255, 0.5);
     }
-    .btn-neon:hover {
-      background: #00d4ff;
-      color: #050510;
-      box-shadow: 0 0 30px #00d4ff, 0 0 60px #00d4ff;
-      transform: scale(1.05);
+    .suggestion-btn:hover {
+      transform: scale(1.02);
+      box-shadow: 0 0 30px rgba(0, 212, 255, 0.8);
     }
-    .btn-neon-pink {
-      border-color: #ff00d4;
-      color: #ff00d4;
-      box-shadow: 0 0 10px rgba(255, 0, 212, 0.3);
-    }
-    .btn-neon-pink:hover {
-      background: #ff00d4;
-      color: #050510;
-      box-shadow: 0 0 30px #ff00d4, 0 0 60px #ff00d4;
-    }
-    .btn-neon-green {
-      border-color: #00ff88;
-      color: #00ff88;
-      box-shadow: 0 0 10px rgba(0, 255, 136, 0.3);
-    }
-    .btn-neon-green:hover {
-      background: #00ff88;
-      color: #050510;
-      box-shadow: 0 0 30px #00ff88, 0 0 60px #00ff88;
-    }
-    .glass-card {
-      background: rgba(20, 20, 50, 0.4);
-      backdrop-filter: blur(12px);
-      border-radius: 32px;
-      border: 1px solid rgba(0, 212, 255, 0.3);
-      padding: 32px;
-      transition: all 0.3s ease;
-    }
-    .glass-card:hover {
-      border-color: #00d4ff;
-      box-shadow: 0 0 30px rgba(0, 212, 255, 0.2);
-      transform: translateY(-5px);
-    }
+    /* Логотип */
     .logo {
-      width: 100px;
-      height: 100px;
+      width: 90px;
+      height: 90px;
       background: linear-gradient(135deg, #00d4ff, #ff00d4);
-      border-radius: 30px;
+      border-radius: 28px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 48px;
+      font-size: 44px;
       margin: 0 auto 20px;
       cursor: pointer;
       transition: all 0.3s ease;
@@ -92,6 +120,7 @@
       transform: scale(1.05);
       box-shadow: 0 0 40px rgba(0, 212, 255, 0.8);
     }
+    /* Модальное окно */
     .admin-modal {
       display: none;
       position: fixed;
@@ -144,48 +173,47 @@
       z-index: 100;
       border: 1px solid rgba(255,255,255,0.2);
     }
-    .loading {
-      text-align: center;
-      padding: 40px;
-      color: #00d4ff;
+    /* Сетка карточек */
+    .tests-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 24px;
+      max-width: 1000px;
+      margin: 0 auto;
     }
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.5; }
+    @media (max-width: 768px) {
+      .tests-grid { gap: 16px; }
+      .test-card { padding: 20px 16px; }
+      .test-icon { font-size: 36px; }
+      .test-title { font-size: 18px; }
     }
-    .loading-spinner {
-      width: 50px;
-      height: 50px;
-      border: 3px solid rgba(0, 212, 255, 0.3);
-      border-top-color: #00d4ff;
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-      margin: 0 auto 20px;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
   </style>
 </head>
 <body>
+  <div class="animated-bg"></div>
   <div class="theme-toggle" onclick="toggleTheme()" id="theme-icon">🌙</div>
-  <div class="min-h-screen flex items-center justify-center p-6">
-    <div class="text-center max-w-md w-full">
-      <div class="logo" onclick="onLogoClick()">
-        🎮
-      </div>
-      <h1 class="text-5xl font-extrabold mb-2 neon-glow">МОСКВА ЛАЙВ</h1>
-      <p class="text-gray-400 mb-8">Выбери свой путь 🔥</p>
-      <div id="testButtonsContainer" class="space-y-4">
-        <div class="loading"><div class="loading-spinner"></div>Загрузка...</div>
-      </div>
-      <button onclick="sendSuggestion()" class="btn-neon btn-neon-pink w-full mt-6">💡 Предложения или ошибки</button>
+  
+  <div class="min-h-screen flex flex-col items-center justify-center p-6">
+    <div class="logo" onclick="onLogoClick()">
+      🎮
     </div>
+    <h1 class="text-5xl md:text-6xl font-extrabold mb-2 neon-glow text-center">МОСКВА ЛАЙВ</h1>
+    <p class="text-gray-400 mb-12 text-center">Выбери тест и докажи свой уровень 🔥</p>
+    
+    <div id="testButtonsContainer" class="tests-grid">
+      <div class="loading text-center col-span-full">🌀 Загрузка...</div>
+    </div>
+    
+    <button onclick="sendSuggestion()" class="suggestion-btn mt-12">
+      💡 ПРЕДЛОЖЕНИЯ ИЛИ ОШИБКИ
+    </button>
   </div>
 
   <div id="adminModal" class="admin-modal" onclick="if(event.target===this) closeAdminModal()">
     <div class="admin-modal-content">
-      <h2 class="text-2xl font-bold mb-4 neon-glow">🔐 ВХОД В АДМИНКУ</h2>
+      <h2 class="text-2xl font-bold mb-4 neon-glow">🔐 ДОСТУП В АДМИНКУ</h2>
       <input type="password" id="adminPassword" placeholder="Введите пароль">
-      <button onclick="checkFirstPassword()" class="btn-neon w-full">ВОЙТИ</button>
+      <button onclick="checkPassword()" class="w-full bg-gradient-to-r from-cyan-500 to-blue-500 py-3 rounded-full font-bold">ВОЙТИ</button>
       <div id="adminError" class="text-red-500 text-sm mt-3"></div>
     </div>
   </div>
@@ -200,44 +228,102 @@ const FIREBASE_CONFIG = {
   appId: "1:956332293918:web:e7f66986cca2a30474130f"
 };
 
-const FIRST_PASSWORD = "1495";
-const ADMIN_SECRET_URL = "neon-admin-9f3a.html";
-
+const ADMIN_PASSWORD = "1495";
 let clickCount = 0, clickTimer = null, db = null;
 
 function initFirebase() { if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG); db = firebase.database(); }
 async function loadVisibility() {
-  try { const s = await db.ref('settings/testVisibility').once('value'); if(s.exists()) renderVisibleTests(s.val()); else renderVisibleTests({ ppo: true, ustav: true, leadership: true }); } catch(e){ renderVisibleTests({ ppo: true, ustav: true, leadership: true }); }
-  db.ref('settings/testVisibility').on('value', (s) => { if(s.exists()) renderVisibleTests(s.val()); });
+  try { 
+    const s = await db.ref('settings/testVisibility').once('value'); 
+    if(s.exists()) renderTests(s.val()); 
+    else renderTests({ ppo: true, ustav: true, leadership: true }); 
+  } catch(e){ renderTests({ ppo: true, ustav: true, leadership: true }); }
+  db.ref('settings/testVisibility').on('value', (s) => { if(s.exists()) renderTests(s.val()); });
 }
-function renderVisibleTests(v) {
-  const vis = v || { ppo: true, ustav: true, leadership: true };
-  const c = document.getElementById('testButtonsContainer'); if(!c) return;
-  c.innerHTML = '';
+
+function renderTests(vis) {
+  const container = document.getElementById('testButtonsContainer');
+  if(!container) return;
+  container.innerHTML = '';
+  
   const tests = [
-    { id: 'ustav', name: '📜 ТЕСТ УСТАВА', color: 'blue', url: 'ustav.html' },
-    { id: 'ppo', name: '📋 ТЕСТ ППО', color: 'pink', url: 'ppo.html' },
-    { id: 'leadership', name: '👔 ТЕСТ РУКОВОДСТВА', color: 'green', url: 'leadership.html' }
+    { id: 'ustav', name: '📜 УСТАВ', desc: 'Проверь знание устава организации', color: 'cyan', url: 'ustav.html', icon: '📜' },
+    { id: 'ppo', name: '📋 ППО', desc: 'Правила публикации объявлений', color: 'pink', url: 'ppo.html', icon: '📋' },
+    { id: 'leadership', name: '👔 РУКОВОДСТВО', desc: 'Кто есть кто в руководстве', color: 'green', url: 'leadership.html', icon: '👔' }
   ];
-  let cnt = 0;
-  tests.forEach(t => {
-    if(vis[t.id]) {
-      cnt++;
-      const btn = document.createElement('a');
-      btn.href = t.url;
-      btn.className = `btn-neon ${t.id === 'ppo' ? 'btn-neon-pink' : (t.id === 'leadership' ? 'btn-neon-green' : '')} w-full block`;
-      btn.textContent = t.name;
-      c.appendChild(btn);
+  
+  let hasVisible = false;
+  tests.forEach(test => {
+    if(vis[test.id]) {
+      hasVisible = true;
+      const card = document.createElement('div');
+      card.className = `test-card ${test.color === 'pink' ? 'pink' : (test.color === 'green' ? 'green' : '')}`;
+      card.onclick = () => window.location.href = test.url;
+      card.innerHTML = `
+        <div class="test-icon">${test.icon}</div>
+        <div class="test-title ${test.color === 'pink' ? 'neon-glow-pink' : (test.color === 'green' ? 'neon-glow' : 'neon-glow')}">${test.name}</div>
+        <div class="test-desc">${test.desc}</div>
+      `;
+      container.appendChild(card);
     }
   });
-  if(cnt === 0) c.innerHTML = '<p class="text-center text-gray-400">⚠️ Все тесты скрыты. Зайдите в админку.</p>';
+  
+  if(!hasVisible) {
+    container.innerHTML = '<div class="text-center text-gray-400 col-span-full p-8">⚠️ Все тесты скрыты. Зайдите в админку.</div>';
+  }
 }
-function onLogoClick() { clickCount++; if(clickTimer) clearTimeout(clickTimer); clickTimer = setTimeout(() => clickCount = 0, 800); if(clickCount === 3) { clickCount = 0; document.getElementById('adminModal').classList.add('active'); } }
-function checkFirstPassword() { if(document.getElementById('adminPassword').value === FIRST_PASSWORD) { window.location.href = ADMIN_SECRET_URL; } else { document.getElementById('adminError').textContent = "Неверный пароль!"; } }
-function closeAdminModal() { document.getElementById('adminModal').classList.remove('active'); document.getElementById('adminPassword').value = ''; document.getElementById('adminError').textContent = ''; }
-function sendSuggestion() { const s = prompt("Ваше предложение или ошибка:"); if(s) alert("Спасибо!"); }
-function toggleTheme() { const h = document.documentElement; const isDark = h.classList.contains('dark'); if(isDark) { h.classList.remove('dark'); localStorage.setItem('theme', 'light'); document.getElementById('theme-icon').textContent = '🌙'; } else { h.classList.add('dark'); localStorage.setItem('theme', 'dark'); document.getElementById('theme-icon').textContent = '☀️'; } }
-(function() { const s = localStorage.getItem('theme'); if(s === 'dark') { document.documentElement.classList.add('dark'); document.getElementById('theme-icon').textContent = '☀️'; } else { document.documentElement.classList.remove('dark'); document.getElementById('theme-icon').textContent = '🌙'; } })();
+
+function onLogoClick() { 
+  clickCount++; 
+  if(clickTimer) clearTimeout(clickTimer); 
+  clickTimer = setTimeout(() => clickCount = 0, 800); 
+  if(clickCount === 3) { 
+    clickCount = 0; 
+    document.getElementById('adminModal').classList.add('active'); 
+  } 
+}
+
+function checkPassword() { 
+  if(document.getElementById('adminPassword').value === ADMIN_PASSWORD) { 
+    window.location.href = 'admin.html'; 
+  } else { 
+    document.getElementById('adminError').textContent = "Неверный пароль!"; 
+  } 
+}
+
+function closeAdminModal() { 
+  document.getElementById('adminModal').classList.remove('active'); 
+  document.getElementById('adminPassword').value = ''; 
+  document.getElementById('adminError').textContent = ''; 
+}
+
+function sendSuggestion() { 
+  const s = prompt("Ваше предложение или описание ошибки:"); 
+  if(s) alert("Спасибо за обращение!"); 
+}
+
+function toggleTheme() { 
+  const h = document.documentElement; 
+  const isDark = h.classList.contains('dark'); 
+  if(isDark) { 
+    h.classList.remove('dark'); 
+    localStorage.setItem('theme', 'light'); 
+    document.getElementById('theme-icon').textContent = '🌙'; 
+  } else { 
+    h.classList.add('dark'); 
+    localStorage.setItem('theme', 'dark'); 
+    document.getElementById('theme-icon').textContent = '☀️'; 
+  } 
+}
+
+(function() { 
+  const s = localStorage.getItem('theme'); 
+  if(s === 'dark') { 
+    document.documentElement.classList.add('dark'); 
+    document.getElementById('theme-icon').textContent = '☀️'; 
+  } 
+})();
+
 document.addEventListener('keydown', (e) => { if(e.key === 'Escape') closeAdminModal(); });
 initFirebase();
 loadVisibility();
