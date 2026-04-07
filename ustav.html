@@ -68,12 +68,13 @@ async function loadQuestions() {
   const snapshot = await db.ref('questions/ustavQuestions').once('value');
   const data = snapshot.val();
   if (data && Array.isArray(data)) {
-    // ЗАГРУЖАЕМ ВСЕ ВОПРОСЫ (без фильтрации по inTest)
-    allQuestions = data;
+    // Фильтр: исключаем только вопросы, у которых inTest === false
+    // Все остальные (true, undefined, null) — загружаем
+    allQuestions = data.filter(q => q.inTest !== false);
   } else {
     allQuestions = [];
   }
-  console.log('📋 Загружено вопросов:', allQuestions.length);
+  console.log('📋 Загружено вопросов (inTest !== false):', allQuestions.length);
   return allQuestions.length;
 }
 
@@ -94,7 +95,7 @@ async function startTest() {
   
   const count = await loadQuestions();
   if (count === 0) {
-    alert('Нет вопросов для теста!');
+    alert('Нет вопросов для теста! Убедитесь, что в админ-панели вопросы отмечены "в тест".');
     return;
   }
   
