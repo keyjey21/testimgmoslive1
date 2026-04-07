@@ -18,6 +18,7 @@
     .wrong { background: #fee2e2; color: #991b1b; }
     .answer-hint { margin-top: 12px; padding-top: 8px; border-top: 1px solid #e2e8f0; font-size: 14px; }
     .hidden { display: none; }
+    textarea { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 8px; margin-top: 8px; }
   </style>
 </head>
 <body>
@@ -67,7 +68,8 @@ async function loadQuestions() {
   const snapshot = await db.ref('questions/ustavQuestions').once('value');
   const data = snapshot.val();
   if (data && Array.isArray(data)) {
-    allQuestions = data.filter(q => q.inTest !== false && q.options && Array.isArray(q.options));
+    // Поддерживаем оба типа: с options (выбор ответа) и без options (письменные)
+    allQuestions = data.filter(q => q.inTest !== false);
   } else {
     allQuestions = [];
   }
@@ -92,7 +94,7 @@ async function startTest() {
   
   const count = await loadQuestions();
   if (count === 0) {
-    alert('Нет вопросов для теста! Проверьте, что в вопросах есть варианты ответов.');
+    alert('Нет вопросов для теста!');
     return;
   }
   
@@ -117,16 +119,24 @@ function renderQuestions() {
     const block = document.createElement('div');
     block.className = 'question-block';
     block.id = `q-${i}`;
-    block.innerHTML = `
-      <div class="font-bold text-lg mb-3">${i+1}. ${escapeHtml(q.q)}</div>
-      ${q.options.map(opt => `
+    
+    let innerHtml = `<div class="font-bold text-lg mb-3">${i+1}. ${escapeHtml(q.q)}</div>`;
+    
+    if (q.options && Array.isArray(q.options)) {
+      // Вопрос с вариантами ответа
+      innerHtml += q.options.map(opt => `
         <label class="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-100 cursor-pointer">
           <input type="radio" name="q${i}" value="${escapeHtml(opt)}" class="w-4 h-4">
           <span>${escapeHtml(opt)}</span>
         </label>
-      `).join('')}
-      <div class="answer-hint hidden" id="hint-${i}"></div>
-    `;
+      `).join('');
+    } else {
+      // Письменный вопрос
+      innerHtml += `<textarea name="q${i}" rows="3" class="w-full p-2 border rounded-lg mt-2" placeholder="Введите ответ..."></textarea>`;
+    }
+    
+    innerHtml += `<div class="answer-hint hidden" id="hint-${i}"></div>`;
+    block.innerHTML = innerHtml;
     container.appendChild(block);
   }
 }
@@ -158,12 +168,21 @@ function checkAnswers() {
   
   const username = document.getElementById('username').value.trim();
   
+  // Собираем ответы
   for (let i = 0; i < selectedQuestions.length; i++) {
-    const radios = document.getElementsByName(`q${i}`);
-    for (let r of radios) {
-      if (r.checked) {
-        userAnswers[i] = r.value;
-        break;
+    const q = selectedQuestions[i];
+    if (q.options && Array.isArray(q.options)) {
+      const radios = document.getElementsByName(`q${i}`);
+      for (let r of radios) {
+        if (r.checked) {
+          userAnswers[i] = r.value;
+          break;
+        }
+      }
+    } else {
+      const textarea = document.querySelector(`textarea[name="q${i}"]`);
+      if (textarea) {
+        userAnswers[i] = textarea.value;
       }
     }
   }
@@ -172,7 +191,14 @@ function checkAnswers() {
   for (let i = 0; i < selectedQuestions.length; i++) {
     const q = selectedQuestions[i];
     const userAnswer = userAnswers[i] || '';
-    const isCorrect = (userAnswer === q.answer);
+    let isCorrect = false;
+    
+    if (q.options && Array.isArray(q.options)) {
+      isCorrect = (userAnswer === q.answer);
+    } else {
+      isCorrect = userAnswer.trim().toLowerCase() === (q.answer || '').trim().toLowerCase();
+    }
+    
     if (isCorrect) correctCount++;
     
     const hintDiv = document.getElementById(`hint-${i}`);
@@ -182,8 +208,11 @@ function checkAnswers() {
       hintDiv.style.color = isCorrect ? '#166534' : '#991b1b';
     }
     
+    // Блокируем все инпуты
     const radios = document.getElementsByName(`q${i}`);
     radios.forEach(r => r.disabled = true);
+    const textarea = document.querySelector(`textarea[name="q${i}"]`);
+    if (textarea) textarea.disabled = true;
   }
   
   const passScore = Math.floor(selectedQuestions.length * 0.7);
