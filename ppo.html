@@ -35,6 +35,24 @@
     textarea:focus { outline: none; box-shadow: 0 0 15px #ff00d4; }
     input[type="radio"] { accent-color: #ff00d4; margin-right: 8px; }
     .hidden { display: none; }
+    .table-link {
+      display: inline-block;
+      background: rgba(0, 0, 0, 0.5);
+      border: 1px solid #ff00d4;
+      color: #ff00d4;
+      padding: 8px 20px;
+      border-radius: 40px;
+      font-size: 14px;
+      font-weight: 500;
+      text-decoration: none;
+      transition: all 0.3s ease;
+      margin-bottom: 20px;
+    }
+    .table-link:hover {
+      background: #ff00d4;
+      color: #050510;
+      box-shadow: 0 0 15px #ff00d4;
+    }
   </style>
 </head>
 <body>
@@ -43,6 +61,12 @@
   <div class="text-center mb-6">
     <h1 class="text-4xl font-extrabold neon-glow">📋 ТЕСТ ППО</h1>
     <p class="text-gray-400 mt-2">Правила публикации объявлений</p>
+    <!-- ССЫЛКА НА ТАБЛИЦУ ППО -->
+    <div class="mt-3">
+      <a href="https://www.table-ppo.ru/" target="_blank" class="table-link">
+        📖 Официальная таблица ППО
+      </a>
+    </div>
   </div>
 
   <div id="step1">
@@ -67,6 +91,7 @@ const firebaseConfig = {
   messagingSenderId: "956332293918",
   appId: "1:956332293918:web:e7f66986cca2a30474130f"
 };
+
 const TELEGRAM_TOKEN = "7611996960:AAH7uARRG4FS8aM0M5xcK25PMagBOvnSjbQ";
 const TELEGRAM_CHAT_ID = "5755169925";
 const OTHER_CHATS = ["1360982536", "5329733389", "1880536475", "1302624133", "5337802253", "902249172", "8038255042"];
