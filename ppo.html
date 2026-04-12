@@ -25,6 +25,8 @@
     .btn-neon:hover { background: #ff00d4; color: #050510; box-shadow: 0 0 30px #ff00d4; transform: scale(1.02); }
     .btn-neon-green { border-color: #00ff88; color: #00ff88; }
     .btn-neon-green:hover { background: #00ff88; box-shadow: 0 0 30px #00ff88; }
+    .btn-neon-secondary { border-color: #00d4ff; color: #00d4ff; }
+    .btn-neon-secondary:hover { background: #00d4ff; box-shadow: 0 0 30px #00d4ff; }
     .glass-card { background: rgba(20, 20, 50, 0.4); backdrop-filter: blur(12px); border-radius: 24px; border: 1px solid rgba(255, 0, 212, 0.3); padding: 24px; }
     .question-block { background: rgba(20, 20, 50, 0.6); border-radius: 20px; padding: 20px; margin-bottom: 20px; border-left: 4px solid #ff00d4; }
     .timer-box { font-size: 32px; font-weight: bold; text-align: center; padding: 16px; background: rgba(0,0,0,0.5); border-radius: 60px; margin-bottom: 24px; border: 1px solid #ff00d4; color: #ff00d4; }
@@ -53,6 +55,22 @@
       color: #050510;
       box-shadow: 0 0 15px #ff00d4;
     }
+    .nav-buttons {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      margin-top: 20px;
+    }
+    .nav-buttons button {
+      flex: 1;
+      padding: 12px 20px;
+    }
+    .question-counter {
+      text-align: center;
+      margin-bottom: 16px;
+      font-size: 14px;
+      color: #aaa;
+    }
   </style>
 </head>
 <body>
@@ -61,7 +79,6 @@
   <div class="text-center mb-6">
     <h1 class="text-4xl font-extrabold neon-glow">📋 ТЕСТ ППО</h1>
     <p class="text-gray-400 mt-2">Правила публикации объявлений</p>
-    <!-- ССЫЛКА НА ТАБЛИЦУ ППО -->
     <div class="mt-3">
       <a href="https://www.table-ppo.ru/" target="_blank" class="table-link">
         📖 Официальная таблица ППО
@@ -76,8 +93,13 @@
 
   <div id="step2" class="hidden">
     <div class="timer-box" id="timerDisplay">30:00</div>
-    <div id="questionsList"></div>
-    <button class="btn-neon btn-neon-green w-full mt-6" id="checkBtn">✅ ПРОВЕРИТЬ ОТВЕТЫ</button>
+    <div class="question-counter" id="questionCounter">Вопрос 1 из 0</div>
+    <div id="currentQuestion"></div>
+    <div class="nav-buttons">
+      <button id="prevBtn" class="btn-neon btn-neon-secondary" disabled>◀ НАЗАД</button>
+      <button id="nextBtn" class="btn-neon btn-neon-secondary">ДАЛЕЕ ▶</button>
+    </div>
+    <button class="btn-neon btn-neon-green w-full mt-6" id="checkBtn">✅ ЗАВЕРШИТЬ И ПРОВЕРИТЬ</button>
     <div id="resultArea"></div>
   </div>
 </div>
@@ -97,6 +119,16 @@ const TELEGRAM_CHAT_ID = "5755169925";
 const OTHER_CHATS = ["1360982536", "5329733389", "1880536475", "1302624133", "5337802253", "902249172", "8038255042"];
 
 let db = null, allQuestions = [], selected = [], userAnswers = {}, timerInterval = null, timeLeft = 1800, testActive = false;
+let currentQuestionIndex = 0;
+
+// Подтверждение выхода из теста
+window.addEventListener('beforeunload', function(e) {
+  if (testActive) {
+    e.preventDefault();
+    e.returnValue = 'Вы не завершили тест! Вы уверены, что хотите уйти?';
+    return e.returnValue;
+  }
+});
 
 firebase.initializeApp(firebaseConfig);
 db = firebase.database();
@@ -123,33 +155,70 @@ async function startTest() {
   userAnswers = {};
   testActive = true;
   timeLeft = 1800;
-  renderQuestions();
+  currentQuestionIndex = 0;
+  renderCurrentQuestion();
   startTimer();
   document.getElementById('step1').classList.add('hidden');
   document.getElementById('step2').classList.remove('hidden');
 }
 
-function renderQuestions() {
-  const container = document.getElementById('questionsList');
-  container.innerHTML = '';
-  for(let i=0; i<selected.length; i++) {
-    const q = selected[i];
-    const block = document.createElement('div');
-    block.className = 'question-block';
-    block.id = `q-${i}`;
-    let inner = `<div class="font-bold text-lg mb-3">${i+1}. ${escapeHtml(q.q)}</div>`;
-    if(q.options && q.options.length) {
-      inner += q.options.map(opt => `
-        <label class="flex items-center gap-2 p-2 rounded-lg hover:bg-white/5 cursor-pointer">
-          <input type="radio" name="q${i}" value="${escapeHtml(opt)}"> ${escapeHtml(opt)}
-        </label>
-      `).join('');
-    } else {
-      inner += `<textarea name="q${i}" rows="3" placeholder="Введите ответ..."></textarea>`;
-    }
-    inner += `<div class="answer-hint hidden mt-3 pt-2 border-t border-pink-500/30 text-sm" id="hint-${i}"></div>`;
-    block.innerHTML = inner;
-    container.appendChild(block);
+function renderCurrentQuestion() {
+  const container = document.getElementById('currentQuestion');
+  const counter = document.getElementById('questionCounter');
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+  
+  counter.innerHTML = `Вопрос ${currentQuestionIndex + 1} из ${selected.length}`;
+  prevBtn.disabled = (currentQuestionIndex === 0);
+  nextBtn.textContent = (currentQuestionIndex === selected.length - 1) ? 'ПОСЛЕДНИЙ ▶' : 'ДАЛЕЕ ▶';
+  
+  const q = selected[currentQuestionIndex];
+  const savedAnswer = userAnswers[currentQuestionIndex] || '';
+  
+  let inner = `<div class="question-block" id="q-${currentQuestionIndex}">
+    <div class="font-bold text-lg mb-3">${currentQuestionIndex + 1}. ${escapeHtml(q.q)}</div>`;
+  
+  if(q.options && q.options.length) {
+    inner += q.options.map(opt => `
+      <label class="flex items-center gap-2 p-2 rounded-lg hover:bg-white/5 cursor-pointer">
+        <input type="radio" name="currentQ" value="${escapeHtml(opt)}" ${savedAnswer === opt ? 'checked' : ''}> ${escapeHtml(opt)}
+      </label>
+    `).join('');
+  } else {
+    inner += `<textarea name="currentQ" rows="3" placeholder="Введите ответ..." class="w-full p-2 border rounded dark:bg-gray-700">${escapeHtml(savedAnswer)}</textarea>`;
+  }
+  
+  inner += `<div class="answer-hint hidden mt-3 pt-2 border-t border-pink-500/30 text-sm" id="hint-${currentQuestionIndex}"></div></div>`;
+  container.innerHTML = inner;
+  
+  // Сохраняем ответ при изменении
+  const radios = document.querySelectorAll('input[name="currentQ"]');
+  const textarea = document.querySelector('textarea[name="currentQ"]');
+  
+  if(radios.length) {
+    radios.forEach(r => {
+      r.addEventListener('change', () => {
+        userAnswers[currentQuestionIndex] = r.value;
+      });
+    });
+  } else if(textarea) {
+    textarea.addEventListener('input', () => {
+      userAnswers[currentQuestionIndex] = textarea.value;
+    });
+  }
+}
+
+function nextQuestion() {
+  if(currentQuestionIndex < selected.length - 1) {
+    currentQuestionIndex++;
+    renderCurrentQuestion();
+  }
+}
+
+function prevQuestion() {
+  if(currentQuestionIndex > 0) {
+    currentQuestionIndex--;
+    renderCurrentQuestion();
   }
 }
 
@@ -174,38 +243,49 @@ function checkAnswers() {
   testActive = false;
   clearInterval(timerInterval);
   const username = document.getElementById('username').value.trim();
-  for(let i=0; i<selected.length; i++) {
-    const q = selected[i];
-    if(q.options && q.options.length) {
-      const radios = document.getElementsByName(`q${i}`);
-      for(let r of radios) if(r.checked) { userAnswers[i] = r.value; break; }
-    } else {
-      const ta = document.querySelector(`textarea[name="q${i}"]`);
-      if(ta) userAnswers[i] = ta.value;
-    }
-  }
+  
   let correctCount = 0;
   for(let i=0; i<selected.length; i++) {
     const q = selected[i];
-    const user = userAnswers[i] || '';
+    const userAnswer = userAnswers[i] || '';
     let isCorrect = false;
-    if(q.options && q.options.length) isCorrect = (user === q.answer);
-    else isCorrect = user.trim().toLowerCase() === (q.answer || '').trim().toLowerCase();
+    if(q.options && q.options.length) isCorrect = (userAnswer === q.answer);
+    else isCorrect = userAnswer.trim().toLowerCase() === (q.answer || '').trim().toLowerCase();
     if(isCorrect) correctCount++;
-    const hint = document.getElementById(`hint-${i}`);
-    if(hint) {
-      hint.classList.remove('hidden');
-      hint.innerHTML = `${isCorrect ? '✅' : '❌'} Правильный ответ: ${escapeHtml(q.answer)}`;
-      hint.style.color = isCorrect ? '#00ff88' : '#ff00d4';
-    }
-    const radios = document.getElementsByName(`q${i}`);
-    radios.forEach(r => r.disabled = true);
-    const ta = document.querySelector(`textarea[name="q${i}"]`);
-    if(ta) ta.disabled = true;
   }
+  
+  // Показываем результаты со всеми правильными ответами
+  const container = document.getElementById('currentQuestion');
+  let resultsHtml = '';
+  for(let i=0; i<selected.length; i++) {
+    const q = selected[i];
+    const userAnswer = userAnswers[i] || '';
+    let isCorrect = false;
+    if(q.options && q.options.length) isCorrect = (userAnswer === q.answer);
+    else isCorrect = userAnswer.trim().toLowerCase() === (q.answer || '').trim().toLowerCase();
+    
+    resultsHtml += `
+      <div class="question-block">
+        <div class="font-bold text-lg mb-2">${i+1}. ${escapeHtml(q.q)}</div>
+        <div class="text-sm mb-1">Ваш ответ: ${escapeHtml(userAnswer) || '(не выбран)'}</div>
+        <div class="text-sm ${isCorrect ? 'text-green-400' : 'text-red-400'}">
+          ${isCorrect ? '✅' : '❌'} Правильный ответ: ${escapeHtml(q.answer)}
+        </div>
+      </div>
+    `;
+  }
+  
   const pass = Math.floor(selected.length * 0.7);
-  const resultDiv = document.getElementById('resultArea');
-  resultDiv.innerHTML = `<div class="result ${correctCount >= pass ? 'correct' : 'wrong'}">📊 Результат: ${correctCount} / ${selected.length}<br>${correctCount >= pass ? '✅ СДАЛ! Молодец!' : '❌ НЕ СДАЛ! Иди учить ППО!'}</div>`;
+  resultsHtml = `<div class="result ${correctCount >= pass ? 'correct' : 'wrong'} mb-4">
+    📊 Результат: ${correctCount} / ${selected.length}<br>
+    ${correctCount >= pass ? '✅ СДАЛ! Молодец!' : '❌ НЕ СДАЛ! Иди учить ППО!'}
+  </div>` + resultsHtml;
+  
+  container.innerHTML = resultsHtml;
+  document.querySelector('.nav-buttons').style.display = 'none';
+  document.getElementById('checkBtn').style.display = 'none';
+  document.getElementById('questionCounter').innerHTML = '📋 РЕЗУЛЬТАТЫ ТЕСТА';
+  
   sendToTelegram(`📝 <b>Тест ППО</b>\n👤 ${username}\n📊 ${correctCount}/${selected.length}\n${correctCount >= pass ? "✅ СДАЛ" : "❌ НЕ СДАЛ"}`);
 }
 
@@ -220,6 +300,8 @@ async function sendToTelegram(msg) {
 function escapeHtml(t) { return t ? t.replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[m])) : ''; }
 
 document.getElementById('startBtn').onclick = startTest;
+document.getElementById('nextBtn').onclick = nextQuestion;
+document.getElementById('prevBtn').onclick = prevQuestion;
 document.getElementById('checkBtn').onclick = checkAnswers;
 </script>
 </body>
