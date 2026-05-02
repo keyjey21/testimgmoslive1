@@ -2,47 +2,136 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Тест ППО | Москва ЛАЙВ</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
-    body { background: radial-gradient(ellipse at 20% 30%, #0a0a2a, #050510); min-height: 100vh; color: #fff; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: radial-gradient(ellipse at 20% 30%, #0a0a2a, #050510);
+      min-height: 100vh;
+      color: #fff;
+    }
+    /* Неоновое свечение */
     .neon-glow { text-shadow: 0 0 5px #ff00d4, 0 0 10px #ff00d4, 0 0 20px #ff00d4; }
+    /* Кнопки */
     .btn-neon {
-      background: rgba(0, 0, 0, 0.6);
+      background: rgba(0, 0, 0, 0.5);
       border: 2px solid #ff00d4;
       color: #ff00d4;
-      padding: 12px 24px;
+      padding: 14px 28px;
       border-radius: 60px;
-      font-weight: bold;
+      font-weight: 700;
       cursor: pointer;
       transition: all 0.3s ease;
       backdrop-filter: blur(10px);
+      font-size: 16px;
     }
-    .btn-neon:hover { background: #ff00d4; color: #050510; box-shadow: 0 0 30px #ff00d4; transform: scale(1.02); }
-    .btn-neon-green { border-color: #00ff88; color: #00ff88; }
-    .btn-neon-green:hover { background: #00ff88; box-shadow: 0 0 30px #00ff88; }
-    .btn-neon-secondary { border-color: #00d4ff; color: #00d4ff; }
-    .btn-neon-secondary:hover { background: #00d4ff; box-shadow: 0 0 30px #00d4ff; }
-    .glass-card { background: rgba(20, 20, 50, 0.4); backdrop-filter: blur(12px); border-radius: 24px; border: 1px solid rgba(255, 0, 212, 0.3); padding: 24px; }
-    .question-block { background: rgba(20, 20, 50, 0.6); border-radius: 20px; padding: 20px; margin-bottom: 20px; border-left: 4px solid #ff00d4; }
-    .timer-box { font-size: 32px; font-weight: bold; text-align: center; padding: 16px; background: rgba(0,0,0,0.5); border-radius: 60px; margin-bottom: 24px; border: 1px solid #ff00d4; color: #ff00d4; }
-    .result { text-align: center; padding: 20px; border-radius: 20px; margin-top: 20px; font-weight: bold; }
-    .correct { background: rgba(0, 255, 136, 0.2); color: #00ff88; border: 1px solid #00ff88; }
-    .wrong { background: rgba(255, 0, 212, 0.2); color: #ff00d4; border: 1px solid #ff00d4; }
-    textarea { width: 100%; padding: 12px; border-radius: 12px; background: rgba(0,0,0,0.5); border: 1px solid #ff00d4; color: white; margin-top: 12px; }
-    textarea:focus { outline: none; box-shadow: 0 0 15px #ff00d4; }
-    input[type="radio"] { accent-color: #ff00d4; margin-right: 8px; }
-    .hidden { display: none; }
-    .table-link {
-      display: inline-block;
+    .btn-neon:hover {
+      background: #ff00d4;
+      color: #050510;
+      box-shadow: 0 0 30px #ff00d4;
+      transform: scale(1.02);
+    }
+    .btn-neon-green {
+      border-color: #00ff88;
+      color: #00ff88;
+    }
+    .btn-neon-green:hover {
+      background: #00ff88;
+      box-shadow: 0 0 30px #00ff88;
+    }
+    .btn-neon-blue {
+      border-color: #00d4ff;
+      color: #00d4ff;
+    }
+    .btn-neon-blue:hover {
+      background: #00d4ff;
+      box-shadow: 0 0 30px #00d4ff;
+    }
+    /* Карточка */
+    .glass-card {
+      background: rgba(15, 25, 45, 0.6);
+      backdrop-filter: blur(12px);
+      border-radius: 32px;
+      border: 1px solid rgba(255, 0, 212, 0.3);
+      padding: 32px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    }
+    /* Блок вопроса */
+    .question-block {
+      background: rgba(10, 15, 30, 0.7);
+      border-radius: 24px;
+      padding: 24px;
+      border-left: 4px solid #ff00d4;
+    }
+    /* Таймер */
+    .timer-box {
+      font-size: 36px;
+      font-weight: 800;
+      text-align: center;
+      padding: 16px;
       background: rgba(0, 0, 0, 0.5);
+      border-radius: 60px;
+      margin-bottom: 24px;
       border: 1px solid #ff00d4;
       color: #ff00d4;
-      padding: 8px 20px;
+      letter-spacing: 2px;
+    }
+    /* Результат */
+    .result {
+      text-align: center;
+      padding: 20px;
+      border-radius: 20px;
+      margin-top: 20px;
+      font-weight: bold;
+    }
+    .result-success {
+      background: rgba(0, 255, 136, 0.15);
+      color: #00ff88;
+      border: 1px solid #00ff88;
+    }
+    .result-fail {
+      background: rgba(255, 0, 212, 0.15);
+      color: #ff00d4;
+      border: 1px solid #ff00d4;
+    }
+    /* Поля ввода */
+    textarea {
+      width: 100%;
+      padding: 14px;
+      border-radius: 16px;
+      background: rgba(0, 0, 0, 0.5);
+      border: 1px solid #ff00d4;
+      color: white;
+      margin-top: 12px;
+      font-size: 14px;
+      resize: vertical;
+    }
+    textarea:focus {
+      outline: none;
+      box-shadow: 0 0 15px #ff00d4;
+    }
+    input[type="radio"] {
+      accent-color: #ff00d4;
+      width: 18px;
+      height: 18px;
+      margin-right: 12px;
+    }
+    .hidden { display: none; }
+    /* Ссылка на таблицу */
+    .table-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid #ff00d4;
+      color: #ff00d4;
+      padding: 10px 24px;
       border-radius: 40px;
       font-size: 14px;
       font-weight: 500;
@@ -55,30 +144,54 @@
       color: #050510;
       box-shadow: 0 0 15px #ff00d4;
     }
+    /* Навигация */
     .nav-buttons {
       display: flex;
       justify-content: space-between;
       gap: 16px;
-      margin-top: 20px;
+      margin-top: 24px;
     }
     .nav-buttons button {
       flex: 1;
-      padding: 12px 20px;
     }
+    /* Счётчик вопросов */
     .question-counter {
       text-align: center;
       margin-bottom: 16px;
       font-size: 14px;
       color: #aaa;
+      letter-spacing: 1px;
     }
+    /* Подсказка для письменных вопросов */
     .written-hint {
-      background: rgba(0, 212, 255, 0.15);
+      background: rgba(0, 212, 255, 0.1);
       border-left: 3px solid #00d4ff;
-      padding: 10px 15px;
+      padding: 12px 16px;
       border-radius: 12px;
-      margin-bottom: 15px;
+      margin-bottom: 16px;
       font-size: 13px;
       color: #00d4ff;
+    }
+    /* Инпуты радио в блоке */
+    .radio-label {
+      display: flex;
+      align-items: center;
+      padding: 10px 14px;
+      margin: 6px 0;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .radio-label:hover {
+      background: rgba(255, 0, 212, 0.1);
+    }
+    /* Анимация появления */
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-in {
+      animation: fadeInUp 0.4s ease-out;
     }
   </style>
 </head>
@@ -86,29 +199,31 @@
 
 <div class="glass-card max-w-2xl mx-auto mt-12 p-6">
   <div class="text-center mb-6">
-    <h1 class="text-4xl font-extrabold neon-glow">📋 ТЕСТ ППО</h1>
-    <p class="text-gray-400 mt-2">Правила публикации объявлений</p>
-    <div class="mt-3">
+    <h1 class="text-5xl font-extrabold neon-glow mb-2">📋 ТЕСТ ППО</h1>
+    <p class="text-gray-300 mt-1">Проверь свои знания правил публикации объявлений</p>
+    <div class="mt-4">
       <a href="https://www.table-ppo.ru/" target="_blank" class="table-link">
-        📖 Официальная таблица ППО
+        📖 Открыть официальную таблицу ППО
       </a>
     </div>
   </div>
 
-  <div id="step1">
-    <input type="text" id="username" placeholder="Имя и фамилия" class="w-full p-3 rounded-xl bg-black/50 border border-pink-500 text-white text-center mb-4">
-    <button class="btn-neon w-full" id="startBtn">▶ НАЧАТЬ ТЕСТ</button>
+  <!-- Шаг 1: Ввод имени -->
+  <div id="step1" class="animate-in">
+    <input type="text" id="username" placeholder="Введите ваше имя и фамилию" class="w-full p-4 rounded-xl bg-black/40 border-2 border-pink-500 text-white text-center text-lg focus:outline-none focus:ring-2 focus:ring-pink-500 transition">
+    <button class="btn-neon w-full mt-6" id="startBtn">▶ СТАРТ ТЕСТА</button>
   </div>
 
-  <div id="step2" class="hidden">
+  <!-- Шаг 2: Тест -->
+  <div id="step2" class="hidden animate-in">
     <div class="timer-box" id="timerDisplay">30:00</div>
     <div class="question-counter" id="questionCounter">Вопрос 1 из 0</div>
     <div id="currentQuestion"></div>
     <div class="nav-buttons">
-      <button id="prevBtn" class="btn-neon btn-neon-secondary" disabled>◀ НАЗАД</button>
-      <button id="nextBtn" class="btn-neon btn-neon-secondary">ДАЛЕЕ ▶</button>
+      <button id="prevBtn" class="btn-neon btn-neon-blue" disabled>◀ НАЗАД</button>
+      <button id="nextBtn" class="btn-neon btn-neon-blue">ДАЛЕЕ ▶</button>
     </div>
-    <button class="btn-neon btn-neon-green w-full mt-6" id="checkBtn">✅ ЗАВЕРШИТЬ И ПРОВЕРИТЬ</button>
+    <button class="btn-neon btn-neon-green w-full mt-6" id="checkBtn">✅ ЗАВЕРШИТЬ ТЕСТ</button>
     <div id="resultArea"></div>
   </div>
 </div>
@@ -130,11 +245,11 @@ const OTHER_CHATS = ["1360982536", "5329733389", "1880536475", "1302624133", "53
 let db = null, allQuestions = [], selected = [], userAnswers = {}, timerInterval = null, timeLeft = 1800, testActive = false;
 let currentQuestionIndex = 0;
 
-// Подтверждение выхода из теста
+// Подтверждение выхода
 window.addEventListener('beforeunload', function(e) {
   if (testActive) {
     e.preventDefault();
-    e.returnValue = 'Вы не завершили тест! Вы уверены, что хотите уйти?';
+    e.returnValue = '⚠️ Вы не завершили тест! Точно хотите уйти?';
     return e.returnValue;
   }
 });
@@ -153,13 +268,25 @@ async function loadQuestions() {
   return allQuestions.length;
 }
 
-function shuffle(arr) { for(let i=arr.length-1;i>0;i--){ let j=Math.floor(Math.random()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]]; } return arr; }
+function shuffle(arr) { 
+  for(let i = arr.length - 1; i > 0; i--) { 
+    let j = Math.floor(Math.random() * (i + 1)); 
+    [arr[i], arr[j]] = [arr[j], arr[i]]; 
+  } 
+  return arr; 
+}
 
 async function startTest() {
   const username = document.getElementById('username').value.trim();
-  if(!username) { alert('Введите имя!'); return; }
+  if(!username) { 
+    alert('❌ Пожалуйста, введите ваше имя и фамилию!'); 
+    return; 
+  }
   const cnt = await loadQuestions();
-  if(cnt === 0) { alert('Нет вопросов!'); return; }
+  if(cnt === 0) { 
+    alert('❌ Нет вопросов! Сначала добавьте вопросы в админ-панели.'); 
+    return; 
+  }
   selected = shuffle([...allQuestions]);
   userAnswers = {};
   testActive = true;
@@ -177,38 +304,45 @@ function renderCurrentQuestion() {
   const prevBtn = document.getElementById('prevBtn');
   const nextBtn = document.getElementById('nextBtn');
   
-  counter.innerHTML = `Вопрос ${currentQuestionIndex + 1} из ${selected.length}`;
+  counter.innerHTML = `📌 Вопрос ${currentQuestionIndex + 1} из ${selected.length}`;
   prevBtn.disabled = (currentQuestionIndex === 0);
-  nextBtn.textContent = (currentQuestionIndex === selected.length - 1) ? 'ПОСЛЕДНИЙ ▶' : 'ДАЛЕЕ ▶';
+  nextBtn.textContent = (currentQuestionIndex === selected.length - 1) ? '🏁 ПОСЛЕДНИЙ ▶' : '➡ ДАЛЕЕ';
   
   const q = selected[currentQuestionIndex];
   const savedAnswer = userAnswers[currentQuestionIndex] || '';
   const isWritten = !(q.options && q.options.length);
   
   let inner = `<div class="question-block" id="q-${currentQuestionIndex}">
-    <div class="font-bold text-lg mb-3">${currentQuestionIndex + 1}. ${escapeHtml(q.q)}</div>`;
+    <div class="font-bold text-xl mb-4">${currentQuestionIndex + 1}. ${escapeHtml(q.q)}</div>`;
   
+  // Подсказка для письменных вопросов
   if(isWritten) {
     inner += `<div class="written-hint">
-      <i class="fas fa-info-circle mr-1"></i> 
-      Если объявление некорректное, напишите: <strong class="text-white">"Не корректное объявление."</strong>
+      <span style="font-size: 16px; margin-right: 8px;">💡</span> 
+      Если объявление написано с ошибками или некорректно, напишите: 
+      <strong style="color: #fff; background: rgba(0,212,255,0.2); padding: 2px 8px; border-radius: 20px;">"Не корректное объявление."</strong>
     </div>`;
   }
   
   if(q.options && q.options.length) {
-    inner += q.options.map(opt => `
-      <label class="flex items-center gap-2 p-2 rounded-lg hover:bg-white/5 cursor-pointer">
-        <input type="radio" name="currentQ" value="${escapeHtml(opt)}" ${savedAnswer === opt ? 'checked' : ''}> ${escapeHtml(opt)}
-      </label>
-    `).join('');
+    inner += `<div class="space-y-2 mt-2">`;
+    q.options.forEach(opt => {
+      inner += `
+        <label class="radio-label">
+          <input type="radio" name="currentQ" value="${escapeHtml(opt)}" ${savedAnswer === opt ? 'checked' : ''}>
+          <span class="flex-1">${escapeHtml(opt)}</span>
+        </label>
+      `;
+    });
+    inner += `</div>`;
   } else {
-    inner += `<textarea name="currentQ" rows="3" placeholder="Введите отредактированное объявление..." class="w-full p-3 border rounded-lg dark:bg-gray-700 bg-gray-800 border-pink-500 focus:ring-2 focus:ring-pink-500">${escapeHtml(savedAnswer)}</textarea>`;
+    inner += `<textarea name="currentQ" rows="3" placeholder="✏️ Введите отредактированный вариант объявления..." class="w-full p-3 rounded-xl bg-black/40 border border-pink-500 focus:ring-2 focus:ring-pink-500">${escapeHtml(savedAnswer)}</textarea>`;
   }
   
   inner += `<div class="answer-hint hidden mt-3 pt-2 border-t border-pink-500/30 text-sm" id="hint-${currentQuestionIndex}"></div></div>`;
   container.innerHTML = inner;
   
-  // Сохраняем ответ при изменении
+  // Сохраняем ответ
   const radios = document.querySelectorAll('input[name="currentQ"]');
   const textarea = document.querySelector('textarea[name="currentQ"]');
   
@@ -245,14 +379,18 @@ function startTimer() {
     if(!testActive) return;
     timeLeft--;
     updateTimerDisplay();
-    if(timeLeft <= 0) { clearInterval(timerInterval); alert('Время вышло!'); checkAnswers(); }
+    if(timeLeft <= 0) { 
+      clearInterval(timerInterval); 
+      alert('⏰ Время вышло!'); 
+      checkAnswers(); 
+    }
   }, 1000);
 }
 
 function updateTimerDisplay() {
   const m = Math.floor(timeLeft / 60);
   const s = timeLeft % 60;
-  document.getElementById('timerDisplay').textContent = `${m}:${s.toString().padStart(2,'0')}`;
+  document.getElementById('timerDisplay').textContent = `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
 }
 
 function checkAnswers() {
@@ -262,58 +400,59 @@ function checkAnswers() {
   const username = document.getElementById('username').value.trim();
   
   let correctCount = 0;
-  for(let i=0; i<selected.length; i++) {
+  const userResults = [];
+  
+  for(let i = 0; i < selected.length; i++) {
     const q = selected[i];
     const userAnswer = userAnswers[i] || '';
     let isCorrect = false;
+    
     if(q.options && q.options.length) {
       isCorrect = (userAnswer === q.answer);
     } else {
-      // Нормализация для письменных ответов: убираем лишние пробелы, приводим к нижнему регистру
-      const normalizedUser = userAnswer.trim().toLowerCase().replace(/[«»"„“]/g, '"');
-      const normalizedCorrect = (q.answer || '').trim().toLowerCase().replace(/[«»"„“]/g, '"');
-      isCorrect = (normalizedUser === normalizedCorrect);
+      // Нормализация для письменных ответов
+      const normalize = (str) => str.trim().toLowerCase().replace(/[«»"„“]/g, '"').replace(/\s+/g, ' ');
+      isCorrect = normalize(userAnswer) === normalize(q.answer || '');
     }
     if(isCorrect) correctCount++;
+    userResults.push({ q, userAnswer, isCorrect });
   }
   
-  // Показываем результаты со всеми правильными ответами
+  // Показываем результаты
   const container = document.getElementById('currentQuestion');
-  let resultsHtml = '';
-  for(let i=0; i<selected.length; i++) {
-    const q = selected[i];
-    const userAnswer = userAnswers[i] || '';
-    let isCorrect = false;
-    if(q.options && q.options.length) {
-      isCorrect = (userAnswer === q.answer);
-    } else {
-      const normalizedUser = userAnswer.trim().toLowerCase().replace(/[«»"„“]/g, '"');
-      const normalizedCorrect = (q.answer || '').trim().toLowerCase().replace(/[«»"„“]/g, '"');
-      isCorrect = (normalizedUser === normalizedCorrect);
-    }
-    
-    resultsHtml += `
-      <div class="question-block">
-        <div class="font-bold text-lg mb-2">${i+1}. ${escapeHtml(q.q)}</div>
-        <div class="text-sm mb-1">Ваш ответ: ${escapeHtml(userAnswer) || '(не выбран)'}</div>
-        <div class="text-sm ${isCorrect ? 'text-green-400' : 'text-red-400'}">
-          ${isCorrect ? '✅' : '❌'} Правильный ответ: ${escapeHtml(q.answer)}
-        </div>
+  let resultsHtml = `
+    <div class="result ${correctCount >= Math.floor(selected.length * 0.7) ? 'result-success' : 'result-fail'} mb-6">
+      <div class="text-2xl font-bold mb-2">📊 РЕЗУЛЬТАТ</div>
+      <div class="text-4xl font-black">${correctCount} / ${selected.length}</div>
+      <div class="mt-2 text-lg">${correctCount >= Math.floor(selected.length * 0.7) ? '✅ ПОЗДРАВЛЯЮ! ТЫ СДАЛ!' : '❌ К СОЖАЛЕНИЮ, ТЫ НЕ СДАЛ'}</div>
+      <div class="text-sm opacity-75 mt-2">Проходной балл: ${Math.floor(selected.length * 0.7)} правильных ответов</div>
+    </div>
+    <div class="space-y-4" id="resultsList"></div>
+  `;
+  container.innerHTML = resultsHtml;
+  
+  const resultsList = document.getElementById('resultsList');
+  for(let i = 0; i < userResults.length; i++) {
+    const r = userResults[i];
+    const resultDiv = document.createElement('div');
+    resultDiv.className = `question-block ${r.isCorrect ? 'border-l-green-500' : 'border-l-red-500'}`;
+    resultDiv.style.borderLeftColor = r.isCorrect ? '#00ff88' : '#ff00d4';
+    resultDiv.innerHTML = `
+      <div class="font-bold text-lg mb-2">${i+1}. ${escapeHtml(r.q.q)}</div>
+      <div class="text-sm mb-1 text-gray-300">📝 Ваш ответ: ${escapeHtml(r.userAnswer) || '(не выбран)'}</div>
+      <div class="text-sm ${r.isCorrect ? 'text-green-400' : 'text-red-400'}">
+        ${r.isCorrect ? '✅ Верно!' : '❌ Ошибка!'} 
+        <span class="text-gray-300">Правильный ответ:</span> ${escapeHtml(r.q.answer)}
       </div>
     `;
+    resultsList.appendChild(resultDiv);
   }
   
-  const pass = Math.floor(selected.length * 0.7);
-  resultsHtml = `<div class="result ${correctCount >= pass ? 'correct' : 'wrong'} mb-4">
-    📊 Результат: ${correctCount} / ${selected.length}<br>
-    ${correctCount >= pass ? '✅ СДАЛ! Молодец!' : '❌ НЕ СДАЛ! Иди учить ППО!'}
-  </div>` + resultsHtml;
-  
-  container.innerHTML = resultsHtml;
   document.querySelector('.nav-buttons').style.display = 'none';
   document.getElementById('checkBtn').style.display = 'none';
-  document.getElementById('questionCounter').innerHTML = '📋 РЕЗУЛЬТАТЫ ТЕСТА';
+  document.getElementById('questionCounter').innerHTML = '🏆 РЕЗУЛЬТАТЫ ТЕСТА';
   
+  const pass = Math.floor(selected.length * 0.7);
   sendToTelegram(`📝 <b>Тест ППО</b>\n👤 ${username}\n📊 ${correctCount}/${selected.length}\n${correctCount >= pass ? "✅ СДАЛ" : "❌ НЕ СДАЛ"}`);
 }
 
@@ -325,7 +464,10 @@ async function sendToTelegram(msg) {
   } catch(e) {}
 }
 
-function escapeHtml(t) { return t ? t.replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[m])) : ''; }
+function escapeHtml(t) { 
+  if(!t) return ''; 
+  return t.replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' })[m]); 
+}
 
 document.getElementById('startBtn').onclick = startTest;
 document.getElementById('nextBtn').onclick = nextQuestion;
