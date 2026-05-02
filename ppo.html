@@ -16,9 +16,7 @@
       min-height: 100vh;
       color: #fff;
     }
-    /* Неоновое свечение */
     .neon-glow { text-shadow: 0 0 5px #ff00d4, 0 0 10px #ff00d4, 0 0 20px #ff00d4; }
-    /* Кнопки */
     .btn-neon {
       background: rgba(0, 0, 0, 0.5);
       border: 2px solid #ff00d4;
@@ -53,7 +51,31 @@
       background: #00d4ff;
       box-shadow: 0 0 30px #00d4ff;
     }
-    /* Карточка */
+    .btn-home {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: white;
+      padding: 8px 16px;
+      border-radius: 40px;
+      font-size: 14px;
+      font-weight: 500;
+      text-decoration: none;
+      transition: all 0.3s ease;
+      z-index: 100;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .btn-home:hover {
+      background: #ff00d4;
+      border-color: #ff00d4;
+      color: #050510;
+      transform: scale(1.02);
+    }
     .glass-card {
       background: rgba(15, 25, 45, 0.6);
       backdrop-filter: blur(12px);
@@ -62,14 +84,12 @@
       padding: 32px;
       box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
     }
-    /* Блок вопроса */
     .question-block {
       background: rgba(10, 15, 30, 0.7);
       border-radius: 24px;
       padding: 24px;
       border-left: 4px solid #ff00d4;
     }
-    /* Таймер */
     .timer-box {
       font-size: 36px;
       font-weight: 800;
@@ -82,7 +102,6 @@
       color: #ff00d4;
       letter-spacing: 2px;
     }
-    /* Результат */
     .result {
       text-align: center;
       padding: 20px;
@@ -100,7 +119,6 @@
       color: #ff00d4;
       border: 1px solid #ff00d4;
     }
-    /* Поля ввода */
     textarea {
       width: 100%;
       padding: 14px;
@@ -123,7 +141,6 @@
       margin-right: 12px;
     }
     .hidden { display: none; }
-    /* Ссылка на таблицу */
     .table-link {
       display: inline-flex;
       align-items: center;
@@ -144,7 +161,6 @@
       color: #050510;
       box-shadow: 0 0 15px #ff00d4;
     }
-    /* Навигация */
     .nav-buttons {
       display: flex;
       justify-content: space-between;
@@ -154,7 +170,6 @@
     .nav-buttons button {
       flex: 1;
     }
-    /* Счётчик вопросов */
     .question-counter {
       text-align: center;
       margin-bottom: 16px;
@@ -162,7 +177,6 @@
       color: #aaa;
       letter-spacing: 1px;
     }
-    /* Подсказка для письменных вопросов */
     .written-hint {
       background: rgba(0, 212, 255, 0.1);
       border-left: 3px solid #00d4ff;
@@ -172,7 +186,6 @@
       font-size: 13px;
       color: #00d4ff;
     }
-    /* Инпуты радио в блоке */
     .radio-label {
       display: flex;
       align-items: center;
@@ -185,7 +198,6 @@
     .radio-label:hover {
       background: rgba(255, 0, 212, 0.1);
     }
-    /* Анимация появления */
     @keyframes fadeInUp {
       from { opacity: 0; transform: translateY(20px); }
       to { opacity: 1; transform: translateY(0); }
@@ -196,6 +208,10 @@
   </style>
 </head>
 <body>
+
+<a href="index.html" class="btn-home">
+  🏠 НА ГЛАВНУЮ
+</a>
 
 <div class="glass-card max-w-2xl mx-auto mt-12 p-6">
   <div class="text-center mb-6">
@@ -208,13 +224,11 @@
     </div>
   </div>
 
-  <!-- Шаг 1: Ввод имени -->
   <div id="step1" class="animate-in">
     <input type="text" id="username" placeholder="Введите ваше имя и фамилию" class="w-full p-4 rounded-xl bg-black/40 border-2 border-pink-500 text-white text-center text-lg focus:outline-none focus:ring-2 focus:ring-pink-500 transition">
     <button class="btn-neon w-full mt-6" id="startBtn">▶ СТАРТ ТЕСТА</button>
   </div>
 
-  <!-- Шаг 2: Тест -->
   <div id="step2" class="hidden animate-in">
     <div class="timer-box" id="timerDisplay">30:00</div>
     <div class="question-counter" id="questionCounter">Вопрос 1 из 0</div>
@@ -245,7 +259,6 @@ const OTHER_CHATS = ["1360982536", "5329733389", "1880536475", "1302624133", "53
 let db = null, allQuestions = [], selected = [], userAnswers = {}, timerInterval = null, timeLeft = 1800, testActive = false;
 let currentQuestionIndex = 0;
 
-// Подтверждение выхода
 window.addEventListener('beforeunload', function(e) {
   if (testActive) {
     e.preventDefault();
@@ -315,7 +328,6 @@ function renderCurrentQuestion() {
   let inner = `<div class="question-block" id="q-${currentQuestionIndex}">
     <div class="font-bold text-xl mb-4">${currentQuestionIndex + 1}. ${escapeHtml(q.q)}</div>`;
   
-  // Подсказка для письменных вопросов
   if(isWritten) {
     inner += `<div class="written-hint">
       <span style="font-size: 16px; margin-right: 8px;">💡</span> 
@@ -342,7 +354,6 @@ function renderCurrentQuestion() {
   inner += `<div class="answer-hint hidden mt-3 pt-2 border-t border-pink-500/30 text-sm" id="hint-${currentQuestionIndex}"></div></div>`;
   container.innerHTML = inner;
   
-  // Сохраняем ответ
   const radios = document.querySelectorAll('input[name="currentQ"]');
   const textarea = document.querySelector('textarea[name="currentQ"]');
   
@@ -410,7 +421,6 @@ function checkAnswers() {
     if(q.options && q.options.length) {
       isCorrect = (userAnswer === q.answer);
     } else {
-      // Нормализация для письменных ответов
       const normalize = (str) => str.trim().toLowerCase().replace(/[«»"„“]/g, '"').replace(/\s+/g, ' ');
       isCorrect = normalize(userAnswer) === normalize(q.answer || '');
     }
@@ -418,7 +428,6 @@ function checkAnswers() {
     userResults.push({ q, userAnswer, isCorrect });
   }
   
-  // Показываем результаты
   const container = document.getElementById('currentQuestion');
   let resultsHtml = `
     <div class="result ${correctCount >= Math.floor(selected.length * 0.7) ? 'result-success' : 'result-fail'} mb-6">
