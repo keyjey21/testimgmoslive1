@@ -2,77 +2,199 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Тест Устава | Москва ЛАЙВ</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
-    body { background: radial-gradient(ellipse at 20% 30%, #0a0a2a, #050510); min-height: 100vh; color: #fff; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: radial-gradient(ellipse at 20% 30%, #0a0a2a, #050510);
+      min-height: 100vh;
+      color: #fff;
+    }
+    .neon-glow { text-shadow: 0 0 5px #00d4ff, 0 0 10px #00d4ff, 0 0 20px #00d4ff; }
     .btn-neon {
-      background: rgba(0, 0, 0, 0.6);
+      background: rgba(0, 0, 0, 0.5);
       border: 2px solid #00d4ff;
       color: #00d4ff;
-      padding: 12px 24px;
+      padding: 14px 28px;
       border-radius: 60px;
-      font-weight: bold;
+      font-weight: 700;
       cursor: pointer;
       transition: all 0.3s ease;
+      backdrop-filter: blur(10px);
+      font-size: 16px;
     }
-    .btn-neon:hover { background: #00d4ff; color: #050510; box-shadow: 0 0 30px #00d4ff; }
-    .btn-neon-green { border-color: #00ff88; color: #00ff88; }
-    .btn-neon-green:hover { background: #00ff88; box-shadow: 0 0 30px #00ff88; }
-    .glass-card { background: rgba(20, 20, 50, 0.4); backdrop-filter: blur(12px); border-radius: 24px; border: 1px solid rgba(0, 212, 255, 0.3); padding: 24px; }
-    .question-block { background: rgba(20, 20, 50, 0.6); border-radius: 20px; padding: 20px; margin-bottom: 20px; border-left: 4px solid #00d4ff; }
-    .timer-box { font-size: 32px; font-weight: bold; text-align: center; padding: 16px; background: rgba(0,0,0,0.5); border-radius: 60px; margin-bottom: 24px; border: 1px solid #00d4ff; color: #00d4ff; }
-    .result { text-align: center; padding: 20px; border-radius: 20px; margin-top: 20px; font-weight: bold; }
-    .correct { background: rgba(0, 255, 136, 0.2); color: #00ff88; border: 1px solid #00ff88; }
-    .wrong { background: rgba(255, 0, 212, 0.2); color: #ff00d4; border: 1px solid #ff00d4; }
-    textarea { width: 100%; padding: 12px; border-radius: 12px; background: rgba(0,0,0,0.5); border: 1px solid #00d4ff; color: white; margin-top: 12px; }
-    input[type="radio"] { accent-color: #00d4ff; margin-right: 8px; }
-    .hidden { display: none; }
-    .back-btn {
+    .btn-neon:hover {
+      background: #00d4ff;
+      color: #050510;
+      box-shadow: 0 0 30px #00d4ff;
+      transform: scale(1.02);
+    }
+    .btn-neon-green {
+      border-color: #00ff88;
+      color: #00ff88;
+    }
+    .btn-neon-green:hover {
+      background: #00ff88;
+      box-shadow: 0 0 30px #00ff88;
+    }
+    .btn-neon-blue {
+      border-color: #00d4ff;
+      color: #00d4ff;
+    }
+    .btn-neon-blue:hover {
+      background: #00d4ff;
+      box-shadow: 0 0 30px #00d4ff;
+    }
+    .btn-home {
       position: fixed;
       top: 20px;
       left: 20px;
-      background: rgba(0,0,0,0.5);
+      background: rgba(0, 0, 0, 0.5);
       backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: white;
       padding: 8px 16px;
       border-radius: 40px;
-      color: white;
-      text-decoration: none;
       font-size: 14px;
-      border: 1px solid rgba(255,255,255,0.2);
+      font-weight: 500;
+      text-decoration: none;
+      transition: all 0.3s ease;
       z-index: 100;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
     }
-    .back-btn:hover { background: rgba(0,212,255,0.3); }
+    .btn-home:hover {
+      background: #00d4ff;
+      border-color: #00d4ff;
+      color: #050510;
+      transform: scale(1.02);
+    }
+    .glass-card {
+      background: rgba(15, 25, 45, 0.6);
+      backdrop-filter: blur(12px);
+      border-radius: 32px;
+      border: 1px solid rgba(0, 212, 255, 0.3);
+      padding: 32px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    }
+    .question-block {
+      background: rgba(10, 15, 30, 0.7);
+      border-radius: 24px;
+      padding: 24px;
+      border-left: 4px solid #00d4ff;
+    }
+    .timer-box {
+      font-size: 36px;
+      font-weight: 800;
+      text-align: center;
+      padding: 16px;
+      background: rgba(0, 0, 0, 0.5);
+      border-radius: 60px;
+      margin-bottom: 24px;
+      border: 1px solid #00d4ff;
+      color: #00d4ff;
+      letter-spacing: 2px;
+    }
+    .result {
+      text-align: center;
+      padding: 20px;
+      border-radius: 20px;
+      margin-top: 20px;
+      font-weight: bold;
+    }
+    .result-success {
+      background: rgba(0, 255, 136, 0.15);
+      color: #00ff88;
+      border: 1px solid #00ff88;
+    }
+    .result-fail {
+      background: rgba(255, 0, 212, 0.15);
+      color: #ff00d4;
+      border: 1px solid #ff00d4;
+    }
+    input[type="radio"] {
+      accent-color: #00d4ff;
+      width: 18px;
+      height: 18px;
+      margin-right: 12px;
+    }
+    .hidden { display: none; }
+    .nav-buttons {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      margin-top: 24px;
+    }
+    .nav-buttons button {
+      flex: 1;
+    }
+    .question-counter {
+      text-align: center;
+      margin-bottom: 16px;
+      font-size: 14px;
+      color: #aaa;
+      letter-spacing: 1px;
+    }
+    .radio-label {
+      display: flex;
+      align-items: center;
+      padding: 10px 14px;
+      margin: 6px 0;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .radio-label:hover {
+      background: rgba(0, 212, 255, 0.1);
+    }
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-in {
+      animation: fadeInUp 0.4s ease-out;
+    }
   </style>
 </head>
 <body>
-  <a href="index.html" class="back-btn">← НА ГЛАВНУЮ</a>
 
-  <div class="glass-card max-w-2xl mx-auto mt-16 p-6 mb-8">
-    <div class="text-center mb-6">
-      <h1 class="text-4xl font-extrabold" style="text-shadow: 0 0 10px #00d4ff;">📜 ТЕСТ УСТАВА</h1>
-      <p class="text-gray-400 mt-2">Проверь знание устава организации</p>
-    </div>
+<a href="index.html" class="btn-home">
+  🏠 НА ГЛАВНУЮ
+</a>
 
-    <div id="step1">
-      <input type="text" id="username" placeholder="Имя и фамилия" class="w-full p-3 rounded-xl bg-black/50 border border-cyan-500 text-white text-center mb-4">
-      <button class="btn-neon w-full" id="startBtn">▶ НАЧАТЬ ТЕСТ</button>
-    </div>
-
-    <div id="step2" class="hidden">
-      <div class="timer-box" id="timerDisplay">15:00</div>
-      <div id="questionsList"></div>
-      <button class="btn-neon btn-neon-green w-full mt-6" id="checkBtn">✅ ПРОВЕРИТЬ ОТВЕТЫ</button>
-      <div id="resultArea"></div>
-    </div>
+<div class="glass-card max-w-2xl mx-auto mt-12 p-6">
+  <div class="text-center mb-6">
+    <h1 class="text-5xl font-extrabold neon-glow mb-2">📜 ТЕСТ УСТАВА</h1>
+    <p class="text-gray-300 mt-1">Проверь знание устава организации</p>
   </div>
 
+  <div id="step1" class="animate-in">
+    <input type="text" id="username" placeholder="Введите ваше имя и фамилию" class="w-full p-4 rounded-xl bg-black/40 border-2 border-cyan-500 text-white text-center text-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition">
+    <button class="btn-neon w-full mt-6" id="startBtn">▶ СТАРТ ТЕСТА</button>
+  </div>
+
+  <div id="step2" class="hidden animate-in">
+    <div class="timer-box" id="timerDisplay">15:00</div>
+    <div class="question-counter" id="questionCounter">Вопрос 1 из 0</div>
+    <div id="currentQuestion"></div>
+    <div class="nav-buttons">
+      <button id="prevBtn" class="btn-neon btn-neon-blue" disabled>◀ НАЗАД</button>
+      <button id="nextBtn" class="btn-neon btn-neon-blue">ДАЛЕЕ ▶</button>
+    </div>
+    <button class="btn-neon btn-neon-green w-full mt-6" id="checkBtn">✅ ЗАВЕРШИТЬ ТЕСТ</button>
+    <div id="resultArea"></div>
+  </div>
+</div>
+
 <script>
-const FIREBASE_CONFIG = {
+const firebaseConfig = {
   apiKey: "AIzaSyCuOIt7wMUrN8vu9RQqivNj9w3CdFitrqE",
   authDomain: "moscow-live-tests.firebaseapp.com",
   projectId: "moscow-live-tests",
@@ -85,208 +207,218 @@ const TELEGRAM_TOKEN = "7611996960:AAH7uARRG4FS8aM0M5xcK25PMagBOvnSjbQ";
 const TELEGRAM_CHAT_ID = "5755169925";
 const OTHER_CHATS = ["1360982536", "5329733389", "1880536475", "1302624133", "5337802253", "902249172", "8038255042"];
 
-let db = null;
-let allQuestions = [];
-let selectedQuestions = [];
-let userAnswers = {};
-let timerInterval = null;
-let timeLeft = 900;
-let testActive = false;
+let db = null, allQuestions = [], selected = [], userAnswers = {}, timerInterval = null, timeLeft = 900, testActive = false;
+let currentQuestionIndex = 0;
 
-firebase.initializeApp(FIREBASE_CONFIG);
+window.addEventListener('beforeunload', function(e) {
+  if (testActive) {
+    e.preventDefault();
+    e.returnValue = '⚠️ Вы не завершили тест! Точно хотите уйти?';
+    return e.returnValue;
+  }
+});
+
+firebase.initializeApp(firebaseConfig);
 db = firebase.database();
 
 async function loadQuestions() {
-  try {
-    const snapshot = await db.ref('questions/ustavQuestions').once('value');
-    const data = snapshot.val();
-    if (data && Array.isArray(data)) {
-      allQuestions = data.filter(q => q.inTest !== false);
-    } else {
-      allQuestions = [];
-    }
-    console.log('Загружено вопросов для Устава:', allQuestions.length);
-    return allQuestions.length;
-  } catch(e) {
-    console.error('Ошибка загрузки:', e);
-    return 0;
-  }
+  const snapshot = await db.ref('questions/ustavQuestions').once('value');
+  let questions = snapshot.exists() ? snapshot.val() : [];
+  allQuestions = questions.filter(q => q.inTest !== false);
+  return allQuestions.length;
 }
 
-function shuffleArray(arr) {
-  for (let i = arr.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [arr[i], arr[j]] = [arr[j], arr[i]];
-  }
-  return arr;
+function shuffle(arr) { 
+  for(let i = arr.length - 1; i > 0; i--) { 
+    let j = Math.floor(Math.random() * (i + 1)); 
+    [arr[i], arr[j]] = [arr[j], arr[i]]; 
+  } 
+  return arr; 
 }
 
 async function startTest() {
   const username = document.getElementById('username').value.trim();
-  if (!username) {
-    alert('Введите имя и фамилию!');
-    return;
+  if(!username) { 
+    alert('❌ Пожалуйста, введите ваше имя и фамилию!'); 
+    return; 
   }
-  
-  const count = await loadQuestions();
-  if (count === 0) {
-    alert('Нет вопросов для теста! Сначала добавьте вопросы в админ-панели.');
-    return;
+  const cnt = await loadQuestions();
+  if(cnt === 0) { 
+    alert('❌ Нет вопросов! Сначала добавьте вопросы в админ-панели.'); 
+    return; 
   }
-  
-  selectedQuestions = shuffleArray([...allQuestions]);
+  selected = shuffle([...allQuestions]);
   userAnswers = {};
   testActive = true;
   timeLeft = 900;
-  
-  renderQuestions();
+  currentQuestionIndex = 0;
+  renderCurrentQuestion();
   startTimer();
-  
   document.getElementById('step1').classList.add('hidden');
   document.getElementById('step2').classList.remove('hidden');
 }
 
-function renderQuestions() {
-  const container = document.getElementById('questionsList');
-  container.innerHTML = '';
+function renderCurrentQuestion() {
+  const container = document.getElementById('currentQuestion');
+  const counter = document.getElementById('questionCounter');
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
   
-  for (let i = 0; i < selectedQuestions.length; i++) {
-    const q = selectedQuestions[i];
-    const block = document.createElement('div');
-    block.className = 'question-block';
-    block.id = `q-${i}`;
-    
-    let innerHtml = `<div class="font-bold text-lg mb-3">${i+1}. ${escapeHtml(q.q)}</div>`;
-    
-    if (q.options && Array.isArray(q.options) && q.options.length > 0) {
-      innerHtml += q.options.map(opt => `
-        <label class="flex items-center gap-3 p-2 rounded-lg hover:bg-white/5 cursor-pointer">
-          <input type="radio" name="q${i}" value="${escapeHtml(opt)}"> ${escapeHtml(opt)}
+  counter.innerHTML = `📌 Вопрос ${currentQuestionIndex + 1} из ${selected.length}`;
+  prevBtn.disabled = (currentQuestionIndex === 0);
+  nextBtn.textContent = (currentQuestionIndex === selected.length - 1) ? '🏁 ПОСЛЕДНИЙ ▶' : '➡ ДАЛЕЕ';
+  
+  const q = selected[currentQuestionIndex];
+  const savedAnswer = userAnswers[currentQuestionIndex] || '';
+  
+  let inner = `<div class="question-block" id="q-${currentQuestionIndex}">
+    <div class="font-bold text-xl mb-4">${currentQuestionIndex + 1}. ${escapeHtml(q.q)}</div>`;
+  
+  if(q.options && q.options.length) {
+    inner += `<div class="space-y-2 mt-2">`;
+    q.options.forEach(opt => {
+      inner += `
+        <label class="radio-label">
+          <input type="radio" name="currentQ" value="${escapeHtml(opt)}" ${savedAnswer === opt ? 'checked' : ''}>
+          <span class="flex-1">${escapeHtml(opt)}</span>
         </label>
-      `).join('');
-    } else {
-      innerHtml += `<textarea name="q${i}" rows="3" placeholder="Введите ответ..."></textarea>`;
-    }
-    
-    innerHtml += `<div class="answer-hint hidden mt-3 pt-2 border-t border-cyan-500/30 text-sm" id="hint-${i}"></div>`;
-    block.innerHTML = innerHtml;
-    container.appendChild(block);
+      `;
+    });
+    inner += `</div>`;
+  } else {
+    inner += `<textarea name="currentQ" rows="3" placeholder="✏️ Введите ответ..." class="w-full p-3 rounded-xl bg-black/40 border border-cyan-500 focus:ring-2 focus:ring-cyan-500">${escapeHtml(savedAnswer)}</textarea>`;
+  }
+  
+  inner += `<div class="answer-hint hidden mt-3 pt-2 border-t border-cyan-500/30 text-sm" id="hint-${currentQuestionIndex}"></div></div>`;
+  container.innerHTML = inner;
+  
+  const radios = document.querySelectorAll('input[name="currentQ"]');
+  const textarea = document.querySelector('textarea[name="currentQ"]');
+  
+  if(radios.length) {
+    radios.forEach(r => {
+      r.addEventListener('change', () => {
+        userAnswers[currentQuestionIndex] = r.value;
+      });
+    });
+  } else if(textarea) {
+    textarea.addEventListener('input', () => {
+      userAnswers[currentQuestionIndex] = textarea.value;
+    });
+  }
+}
+
+function nextQuestion() {
+  if(currentQuestionIndex < selected.length - 1) {
+    currentQuestionIndex++;
+    renderCurrentQuestion();
+  }
+}
+
+function prevQuestion() {
+  if(currentQuestionIndex > 0) {
+    currentQuestionIndex--;
+    renderCurrentQuestion();
   }
 }
 
 function startTimer() {
   updateTimerDisplay();
   timerInterval = setInterval(() => {
-    if (!testActive) return;
+    if(!testActive) return;
     timeLeft--;
     updateTimerDisplay();
-    if (timeLeft <= 0) {
-      clearInterval(timerInterval);
-      alert('Время вышло!');
-      checkAnswers();
+    if(timeLeft <= 0) { 
+      clearInterval(timerInterval); 
+      alert('⏰ Время вышло!'); 
+      checkAnswers(); 
     }
   }, 1000);
 }
 
 function updateTimerDisplay() {
-  const minutes = Math.floor(timeLeft / 60);
-  const seconds = timeLeft % 60;
-  document.getElementById('timerDisplay').textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  const m = Math.floor(timeLeft / 60);
+  const s = timeLeft % 60;
+  document.getElementById('timerDisplay').textContent = `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
 }
 
 function checkAnswers() {
-  if (!testActive) return;
+  if(!testActive) return;
   testActive = false;
   clearInterval(timerInterval);
-  
   const username = document.getElementById('username').value.trim();
   
-  for (let i = 0; i < selectedQuestions.length; i++) {
-    const q = selectedQuestions[i];
-    if (q.options && Array.isArray(q.options) && q.options.length > 0) {
-      const radios = document.getElementsByName(`q${i}`);
-      for (let r of radios) {
-        if (r.checked) {
-          userAnswers[i] = r.value;
-          break;
-        }
-      }
-    } else {
-      const textarea = document.querySelector(`textarea[name="q${i}"]`);
-      if (textarea) {
-        userAnswers[i] = textarea.value;
-      }
-    }
-  }
-  
   let correctCount = 0;
-  for (let i = 0; i < selectedQuestions.length; i++) {
-    const q = selectedQuestions[i];
+  const userResults = [];
+  
+  for(let i = 0; i < selected.length; i++) {
+    const q = selected[i];
     const userAnswer = userAnswers[i] || '';
     let isCorrect = false;
     
-    if (q.options && Array.isArray(q.options) && q.options.length > 0) {
+    if(q.options && q.options.length) {
       isCorrect = (userAnswer === q.answer);
     } else {
-      isCorrect = userAnswer.trim().toLowerCase() === (q.answer || '').trim().toLowerCase();
+      const normalize = (str) => str.trim().toLowerCase().replace(/[«»"„“]/g, '"').replace(/\s+/g, ' ');
+      isCorrect = normalize(userAnswer) === normalize(q.answer || '');
     }
-    
-    if (isCorrect) correctCount++;
-    
-    const hintDiv = document.getElementById(`hint-${i}`);
-    if (hintDiv) {
-      hintDiv.classList.remove('hidden');
-      hintDiv.innerHTML = `${isCorrect ? '✅' : '❌'} Правильный ответ: ${escapeHtml(q.answer)}`;
-      hintDiv.style.color = isCorrect ? '#00ff88' : '#ff00d4';
-    }
-    
-    const radios = document.getElementsByName(`q${i}`);
-    radios.forEach(r => r.disabled = true);
-    const textarea = document.querySelector(`textarea[name="q${i}"]`);
-    if (textarea) textarea.disabled = true;
+    if(isCorrect) correctCount++;
+    userResults.push({ q, userAnswer, isCorrect });
   }
   
-  const passScore = Math.floor(selectedQuestions.length * 0.7);
-  const resultDiv = document.getElementById('resultArea');
-  resultDiv.innerHTML = `
-    <div class="result ${correctCount >= passScore ? 'correct' : 'wrong'}">
-      📊 Результат: ${correctCount} / ${selectedQuestions.length}<br>
-      ${correctCount >= passScore ? '✅ СДАЛ! Молодец!' : '❌ НЕ СДАЛ! Иди учить устав!'}
+  const container = document.getElementById('currentQuestion');
+  let resultsHtml = `
+    <div class="result ${correctCount >= Math.floor(selected.length * 0.7) ? 'result-success' : 'result-fail'} mb-6">
+      <div class="text-2xl font-bold mb-2">📊 РЕЗУЛЬТАТ</div>
+      <div class="text-4xl font-black">${correctCount} / ${selected.length}</div>
+      <div class="mt-2 text-lg">${correctCount >= Math.floor(selected.length * 0.7) ? '✅ ПОЗДРАВЛЯЮ! ТЫ СДАЛ!' : '❌ К СОЖАЛЕНИЮ, ТЫ НЕ СДАЛ'}</div>
+      <div class="text-sm opacity-75 mt-2">Проходной балл: ${Math.floor(selected.length * 0.7)} правильных ответов</div>
     </div>
+    <div class="space-y-4" id="resultsList"></div>
   `;
+  container.innerHTML = resultsHtml;
   
-  sendToTelegram(`📝 <b>Тест Устава</b>\n👤 ${username}\n📊 ${correctCount}/${selectedQuestions.length}\n${correctCount >= passScore ? "✅ СДАЛ" : "❌ НЕ СДАЛ"}`);
+  const resultsList = document.getElementById('resultsList');
+  for(let i = 0; i < userResults.length; i++) {
+    const r = userResults[i];
+    const resultDiv = document.createElement('div');
+    resultDiv.className = `question-block ${r.isCorrect ? 'border-l-green-500' : 'border-l-red-500'}`;
+    resultDiv.style.borderLeftColor = r.isCorrect ? '#00ff88' : '#ff00d4';
+    resultDiv.innerHTML = `
+      <div class="font-bold text-lg mb-2">${i+1}. ${escapeHtml(r.q.q)}</div>
+      <div class="text-sm mb-1 text-gray-300">📝 Ваш ответ: ${escapeHtml(r.userAnswer) || '(не выбран)'}</div>
+      <div class="text-sm ${r.isCorrect ? 'text-green-400' : 'text-red-400'}">
+        ${r.isCorrect ? '✅ Верно!' : '❌ Ошибка!'} 
+        <span class="text-gray-300">Правильный ответ:</span> ${escapeHtml(r.q.answer)}
+      </div>
+    `;
+    resultsList.appendChild(resultDiv);
+  }
+  
+  document.querySelector('.nav-buttons').style.display = 'none';
+  document.getElementById('checkBtn').style.display = 'none';
+  document.getElementById('questionCounter').innerHTML = '🏆 РЕЗУЛЬТАТЫ ТЕСТА';
+  
+  const pass = Math.floor(selected.length * 0.7);
+  sendToTelegram(`📝 <b>Тест Устава</b>\n👤 ${username}\n📊 ${correctCount}/${selected.length}\n${correctCount >= pass ? "✅ СДАЛ" : "❌ НЕ СДАЛ"}`);
 }
 
-async function sendToTelegram(message) {
+async function sendToTelegram(msg) {
   const url = `https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`;
   try {
-    await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, text: message, parse_mode: "HTML" })
-    });
-    for (const id of OTHER_CHATS) {
-      await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ chat_id: id, text: message, parse_mode: "HTML" })
-      });
-    }
-  } catch(e) { console.error(e); }
+    await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, text: msg, parse_mode: "HTML" }) });
+    for(let id of OTHER_CHATS) fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ chat_id: id, text: msg, parse_mode: "HTML" }) });
+  } catch(e) {}
 }
 
-function escapeHtml(text) {
-  if (!text) return '';
-  return text.replace(/[&<>]/g, function(m) {
-    if (m === '&') return '&amp;';
-    if (m === '<') return '&lt;';
-    if (m === '>') return '&gt;';
-    return m;
-  });
+function escapeHtml(t) { 
+  if(!t) return ''; 
+  return t.replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' })[m]); 
 }
 
 document.getElementById('startBtn').onclick = startTest;
+document.getElementById('nextBtn').onclick = nextQuestion;
+document.getElementById('prevBtn').onclick = prevQuestion;
 document.getElementById('checkBtn').onclick = checkAnswers;
 </script>
 </body>
