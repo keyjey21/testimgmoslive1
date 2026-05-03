@@ -215,6 +215,10 @@ const FIREBASE_CONFIG = {
 };
 
 const ADMIN_PASSWORD = "1495";
+
+// 🎯 DISCORD WEBHOOK — предложения
+const DISCORD_SUGGESTIONS = "https://discord.com/api/webhooks/1500489792159354900/temeK7DdbRTfd88JBRD_2vLM8QpDRpUMl4CBsyyfrVbw3fJ64znRfr52nZ4iZNEN-7Ks";
+
 let db = null;
 
 function initFirebase() { if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG); db = firebase.database(); }
@@ -267,7 +271,26 @@ function checkPassword() {
   else { document.getElementById('adminError').textContent = "Неверный пароль!"; } 
 }
 function closeAdminModal() { document.getElementById('adminModal').classList.remove('active'); document.getElementById('adminPassword').value = ''; document.getElementById('adminError').textContent = ''; }
-function sendSuggestion() { const s = prompt("Ваше предложение или описание ошибки:"); if(s) alert("Спасибо за обращение!"); }
+
+// Отправка предложений в Discord
+async function sendSuggestion() {
+  const suggestion = prompt("Ваше предложение или описание ошибки:");
+  if (!suggestion) return;
+  
+  try {
+    await fetch(DISCORD_SUGGESTIONS, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        content: `💡 **Новое предложение**\n📝 ${suggestion}\n🕐 ${new Date().toLocaleString()}`,
+        username: "Москва Лайв"
+      })
+    });
+    alert("✅ Спасибо! Предложение отправлено.");
+  } catch(e) {
+    alert("❌ Ошибка отправки");
+  }
+}
 
 initFirebase();
 loadVisibility();
