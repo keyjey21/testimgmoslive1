@@ -161,6 +161,15 @@
     .animate-in {
       animation: fadeInUp 0.4s ease-out;
     }
+    .error-message {
+      background: rgba(255, 0, 0, 0.2);
+      border: 1px solid #ff4444;
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 20px;
+      color: #ff8888;
+      text-align: center;
+    }
   </style>
 </head>
 <body>
@@ -221,13 +230,28 @@ firebase.initializeApp(firebaseConfig);
 db = firebase.database();
 
 async function loadQuestions() {
-  const snapshot = await db.ref('questions/ustavQuestions').once('value');
-  let questions = snapshot.exists() ? snapshot.val() : [];
-  allQuestions = questions.filter(q => q.inTest !== false);
-  return allQuestions.length;
+  console.log("🔍 Загрузка вопросов из Firebase...");
+  try {
+    const snapshot = await db.ref('questions/ustavQuestions').once('value');
+    console.log("📦 ustavQuestions:", snapshot.exists() ? snapshot.val() : "null");
+    
+    let questions = snapshot.exists() ? snapshot.val() : [];
+    if (!Array.isArray(questions)) questions = [];
+    
+    console.log(`📋 Загружено вопросов: ${questions.length}`);
+    
+    // Фильтруем только вопросы с inTest !== false
+    allQuestions = questions.filter(q => q && q.inTest !== false);
+    console.log(`✅ Итого вопросов для теста: ${allQuestions.length}`);
+    return allQuestions.length;
+  } catch(e) {
+    console.error("❌ Ошибка загрузки вопросов:", e);
+    return 0;
+  }
 }
 
 function shuffle(arr) { 
+  if (!arr || !arr.length) return [];
   for(let i = arr.length - 1; i > 0; i--) { 
     let j = Math.floor(Math.random() * (i + 1)); 
     [arr[i], arr[j]] = [arr[j], arr[i]]; 
@@ -270,11 +294,22 @@ async function startTest() {
     alert('❌ Пожалуйста, введите ваше имя и фамилию!'); 
     return; 
   }
+  
+  // Показываем загрузку
+  const startBtn = document.getElementById('startBtn');
+  startBtn.textContent = "⏳ ЗАГРУЗКА...";
+  startBtn.disabled = true;
+  
   const cnt = await loadQuestions();
+  
+  startBtn.textContent = "▶ СТАРТ ТЕСТА";
+  startBtn.disabled = false;
+  
   if(cnt === 0) { 
-    alert('❌ Нет вопросов! Сначала добавьте вопросы в админ-панели.'); 
+    alert('❌ Нет вопросов для теста!\n\nПроверьте:\n1. В админ-панели добавлены вопросы\n2. У вопросов стоит галочка "в тест"');
     return; 
   }
+  
   selected = shuffle([...allQuestions]);
   userAnswers = {};
   testActive = true;
@@ -292,11 +327,21 @@ function renderCurrentQuestion() {
   const prevBtn = document.getElementById('prevBtn');
   const nextBtn = document.getElementById('nextBtn');
   
+  if (!selected.length) {
+    container.innerHTML = '<div class="error-message">❌ Ошибка: нет вопросов для отображения</div>';
+    return;
+  }
+  
   counter.innerHTML = `📌 Вопрос ${currentQuestionIndex + 1} из ${selected.length}`;
   prevBtn.disabled = (currentQuestionIndex === 0);
   nextBtn.textContent = (currentQuestionIndex === selected.length - 1) ? '🏁 ПОСЛЕДНИЙ ▶' : '➡ ДАЛЕЕ';
   
   const q = selected[currentQuestionIndex];
+  if (!q) {
+    container.innerHTML = '<div class="error-message">❌ Ошибка: вопрос не найден</div>';
+    return;
+  }
+  
   const savedAnswer = userAnswers[currentQuestionIndex] || '';
   
   let inner = `<div class="question-block" id="q-${currentQuestionIndex}">
@@ -370,7 +415,7 @@ function updateTimerDisplay() {
   document.getElementById('timerDisplay').textContent = `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
 }
 
-function checkAnswers() {
+async function checkAnswers() {
   if(!testActive) return;
   testActive = false;
   clearInterval(timerInterval);
@@ -440,6 +485,15 @@ document.getElementById('startBtn').onclick = startTest;
 document.getElementById('nextBtn').onclick = nextQuestion;
 document.getElementById('prevBtn').onclick = prevQuestion;
 document.getElementById('checkBtn').onclick = checkAnswers;
+
+// Проверка подключения к Firebase
+firebase.database().ref('.info/connected').on('value', (snap) => {
+  if (snap.val() === true) {
+    console.log("✅ Firebase подключен");
+  } else {
+    console.log("❌ Firebase НЕ подключен");
+  }
+});
 </script>
 </body>
 </html>
