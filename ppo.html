@@ -252,9 +252,8 @@ const firebaseConfig = {
   appId: "1:956332293918:web:e7f66986cca2a30474130f"
 };
 
-const TELEGRAM_TOKEN = "7611996960:AAH7uARRG4FS8aM0M5xcK25PMagBOvnSjbQ";
-const TELEGRAM_CHAT_ID = "5755169925";
-const OTHER_CHATS = ["1360982536", "5329733389", "1880536475", "1302624133", "5337802253", "902249172", "8038255042"];
+// 🎯 DISCORD WEBHOOK — результаты тестов
+const DISCORD_RESULTS = "https://discord.com/api/webhooks/1500489572025372842/IGJtGda4K64g0comJ-PbOo04fiAVNTfFmD_sZSNk8W0fqbPsgsV0s7yhO-3kMQ-67urU";
 
 let db = null, allQuestions = [], selected = [], userAnswers = {}, timerInterval = null, timeLeft = 1800, testActive = false;
 let currentQuestionIndex = 0;
@@ -287,6 +286,35 @@ function shuffle(arr) {
     [arr[i], arr[j]] = [arr[j], arr[i]]; 
   } 
   return arr; 
+}
+
+async function sendToDiscord(username, score, total, passed, testName) {
+  const color = passed ? 0x00ff88 : 0xff00d4;
+  const status = passed ? "✅ СДАЛ" : "❌ НЕ СДАЛ";
+  const percent = Math.round(score / total * 100);
+  
+  try {
+    await fetch(DISCORD_RESULTS, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        embeds: [{
+          title: `📊 Результат теста ${testName}`,
+          description: `**${username}** ${status}`,
+          color: color,
+          fields: [
+            { name: "📝 Правильных ответов", value: `${score}/${total}`, inline: true },
+            { name: "📈 Процент", value: `${percent}%`, inline: true },
+            { name: "🎯 Проходной балл", value: `${Math.floor(total * 0.7)} правильных`, inline: true },
+            { name: "📅 Дата", value: new Date().toLocaleString(), inline: false }
+          ],
+          footer: { text: "Москва Лайв | Система тестирования" }
+        }]
+      })
+    });
+  } catch(e) {
+    console.error("Discord send error:", e);
+  }
 }
 
 async function startTest() {
@@ -462,15 +490,7 @@ function checkAnswers() {
   document.getElementById('questionCounter').innerHTML = '🏆 РЕЗУЛЬТАТЫ ТЕСТА';
   
   const pass = Math.floor(selected.length * 0.7);
-  sendToTelegram(`📝 <b>Тест ППО</b>\n👤 ${username}\n📊 ${correctCount}/${selected.length}\n${correctCount >= pass ? "✅ СДАЛ" : "❌ НЕ СДАЛ"}`);
-}
-
-async function sendToTelegram(msg) {
-  const url = `https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`;
-  try {
-    await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, text: msg, parse_mode: "HTML" }) });
-    for(let id of OTHER_CHATS) fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ chat_id: id, text: msg, parse_mode: "HTML" }) });
-  } catch(e) {}
+  await sendToDiscord(username, correctCount, selected.length, correctCount >= pass, "ППО");
 }
 
 function escapeHtml(t) { 
